@@ -31,3 +31,22 @@ def game_Sound(game_sound_path, volume=0.5):
     sound = pygame.mixer.Sound(game_sound_path)
     sound.set_volume(volume)
     sound.play()
+
+
+# 获取单词库中的英文，音标，汉语，机会次数，单词长度
+def read_tasks_parameters(path):
+    task_parameters_list = []  # 存放单词的参数，按照单词一组一个的来
+    workbook = xlrd.open_workbook(path)  # 打开一个workbook
+    sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
+    worksheet = workbook.sheet_by_name(sheets[0])  # 得到工作簿的第一页
+    words_numbers = worksheet.nrows  # 获得第一页的行数
+    # 英文，音标，汉语，单词长度，机会次数,时间
+    for word_index in range(words_numbers):
+        parameters_list = [worksheet.cell_value(word_index, 0), worksheet.cell_value(word_index, 1),
+                           worksheet.cell_value(word_index, 2), int(worksheet.cell_value(word_index, 3)),
+                           int(worksheet.cell_value(word_index, 4)), int(worksheet.cell_value(word_index, 5)),
+                           int(worksheet.cell_value(word_index, 6)), int(worksheet.cell_value(word_index, 7)),
+                           int(worksheet.cell_value(word_index, 8)), int(worksheet.cell_value(word_index, 9))]
+        task_parameters_list.append(parameters_list)
+    print(task_parameters_list)
+    return task_parameters_list

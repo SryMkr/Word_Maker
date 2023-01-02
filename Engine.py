@@ -15,6 +15,7 @@ class MainGame(object):  # 控制全局的参数
         self.Main_Game_Running = True  # 控制主游戏的运行
         self.Menu_Font = "Game_Fonts/chinese_pixel_font.TTF"  # 菜单的字体
         self.WHITE = (255, 255, 255)  # 设置一个白色
+        self.BGC = (200, 200, 200) # 设置游戏的背景颜色
         self.mouse_current_x = 0  # 鼠标当前的位置
         self.mouse_current_y = 0  # 鼠标当前的位置
         self.mouse_click_x = 0  # 鼠标点击的位置
@@ -34,6 +35,8 @@ class MainGame(object):  # 控制全局的参数
         self.game_setting_menu_chance = False  # 用来控制主菜单响应
         self.present_word_menu_chance = False  # 控制展示单词菜单
         self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
+        self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
+        # self.pronunciation = False # 单词默认不发音
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
 
     # 检查事件，鼠标事件
@@ -50,6 +53,10 @@ class MainGame(object):  # 控制全局的参数
                 self.game_setting_menu_chance = True  # 游戏设置的响应
                 self.present_word_menu_chance = True  # 控制展示单词菜单
                 self.present_all_word_menu_chance = True  # 控制展示所有单词按钮
+                self.game_level_menu_chance = True  # 控制游戏界面的鼠标响应
+            if event.type == pygame.KEYDOWN:  # 按键按下事件
+                if event.key == pygame.K_q:  # 开始单词发音
+                    self.pronunciation = True
 
     # 因为点击事件会一直相应，所以需要设置一个开关，一次点击只响应一次
     def reset_Keys(self):
@@ -58,6 +65,8 @@ class MainGame(object):  # 控制全局的参数
         self.game_setting_menu_chance = False  # 游戏设置响应
         self.present_word_menu_chance = False  # 控制展示单词菜单
         self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
+        self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
+        self.pronunciation = False
 
     # 保证游戏可以正常运行
     def game_Loop(self):

@@ -1,10 +1,10 @@
 '''
 实现莱特纳系统，选择单词库
-增加跳过再次功能，并且显示进度条
 '''
 import pygame.draw
 from Common_Functions import *
 from datetime import datetime, timedelta
+from game_level_function import *
 
 
 # 首先在游戏之前展示单词的功能
@@ -18,8 +18,8 @@ class PresentWords(object):
         self.surface_width, self.surface_height = work_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface
         self.current_task_index = 0  # 展示单词阶段任务索引
-        self.countdown = 1  # 每个单词给30秒的时间，这个是静态的
-        self.count_seconds = 1  # 从30秒开始倒数，这个是动态的
+        self.countdown = 30  # 每个单词给30秒的时间，这个是静态的
+        self.count_seconds = 30  # 从30秒开始倒数，这个是动态的
         self.start_time = datetime.now()  # 获取但是展示开始的时间
         self.BACKGROUND_COLOR = (200, 200, 200)  # 游戏界面的背景颜色
         self.decrease_width = self.surface_width / self.countdown  # 1秒减少多少宽度
@@ -81,7 +81,7 @@ class PresentWords(object):
                 self.current_task_index += 1  # 展示单词阶段任务索引
                 self.count_seconds = self.countdown  # 从30秒重新倒数
                 if self.current_task_index == len(self.words):  # 如果已经是最后一个单词
-                    self.current_task_index = 0
+                    self.word_maker.current_menu = self.word_maker.present_all_word_menu
             self.word_maker.window.blit(self.present_words_surface, (0, 0))  # 将发音学习画到主游戏上
 
             # 需要用时间控制游戏时间
@@ -95,7 +95,7 @@ class PresentWords(object):
                     self.current_task_index += 1  # 换到下一个单词
                     self.count_seconds = self.countdown  # 从30秒重新倒数
                     if self.current_task_index > len(self.words) - 1:  # 如果展示结束，展示所有单词
-                        self.word_maker.current_menu = self.word_maker.present_all_word_menu
+                        self.word_maker.current_menu = self.word_maker.present_all_word_menu  # 跳到展示所有单词的界面
 
 
 # 在每个单词展示结束以后，再次展示所有的单词120秒
@@ -105,10 +105,10 @@ class PresentAllTasks(object):
 
     def __init__(self, work_maker):  # 参数一定是实例化的游戏
         self.word_maker = work_maker  # 得到主游戏
-        self.surface_width, self.surface_height = work_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
+        self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface
-        self.countdown_all_tasks = 120  # 展示所有单词两分钟，是个变化值
-        self.countdown_time = 120  # 展示的总时间，是个固定值
+        self.countdown_all_tasks = 2  # 展示所有单词两分钟，是个变化值
+        self.countdown_time = 2  # 展示的总时间，是个固定值
         self.BACKGROUND_COLOR = (200, 200, 200)  # 该界面的背景颜色
         self.start_time = datetime.now()  # 获取但是展示开始的时间
         self.decrease_width = self.surface_width / self.countdown_all_tasks  # 1秒减少多少宽度
@@ -154,8 +154,7 @@ class PresentAllTasks(object):
         if datetime.now() > self.start_time + timedelta(seconds=1):  # 如果时间间隔相差一秒
             self.start_time = datetime.now()  # 将现在的时间给过去的时间
             self.countdown_all_tasks -= 1
-            if self.countdown_all_tasks == -1:  # 如果时间结束，结束所有的运行
-                self.countdown_all_tasks = 120  # 目前来看是重新倒计时
+            if self.countdown_all_tasks == -1:  # 如果时间结束，则进入游戏界面
+                self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 实例化游戏界面,第一个参数是机会次数
+                self.word_maker.current_menu = self.word_maker.game_level_menu
 
-
-        # 还要实现跳过按钮
