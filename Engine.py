@@ -20,6 +20,8 @@ class MainGame(object):  # 控制全局的参数
         self.mouse_current_y = 0  # 鼠标当前的位置
         self.mouse_click_x = 0  # 鼠标点击的位置
         self.mouse_click_y = 0  # 鼠标点击的位置
+        self.mouse_rel_x = 0  # 鼠标移动的相对位置
+        self.mouse_rel_y = 0  # 鼠标移动的相对位置
         self.pronunciation_current_word_index = 0  # 记录发音记忆中，是第几个单词
         # 有时候图片太大，需要调整图片大小符合目标屏幕大小
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
@@ -38,6 +40,8 @@ class MainGame(object):  # 控制全局的参数
         self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
         # self.pronunciation = False # 单词默认不发音
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
+        self.click_event = False  # 判断当前鼠标点击没有
+        self.check_spelling = False # 检查拼写
 
     # 检查事件，鼠标事件
     def check_Events(self):
@@ -46,7 +50,10 @@ class MainGame(object):  # 控制全局的参数
                 self.Main_Game_Running = False  # 直接退出游戏
             if event.type == pygame.MOUSEMOTION:  # 鼠标移动
                 self.mouse_current_x, self.mouse_current_y = event.pos  # 获得当前鼠标的坐标
+                self.mouse_rel_x, self.mouse_rel_y = event.rel  # 获得鼠标移动的相对距离
+
             if event.type == pygame.MOUSEBUTTONUP:  # 点击了鼠标
+                self.click_event = False  # # 释放了鼠标
                 self.mouse_click_x, self.mouse_click_y = event.pos
                 self.pronunciation_menu_chance = True  # 用来控制语音检测模块的所有参数
                 self.main_menu_chance = True  # 主菜单的相应
@@ -54,7 +61,11 @@ class MainGame(object):  # 控制全局的参数
                 self.present_word_menu_chance = True  # 控制展示单词菜单
                 self.present_all_word_menu_chance = True  # 控制展示所有单词按钮
                 self.game_level_menu_chance = True  # 控制游戏界面的鼠标响应
+            if event.type == pygame.MOUSEBUTTONDOWN:  # 点击了鼠标
+                self.click_event = True  # 鼠标点击了左键，代表选中了字母
             if event.type == pygame.KEYDOWN:  # 按键按下事件
+                if event.key == pygame.K_RETURN:  # 开始检查单词拼写
+                    self.check_spelling = True
                 if event.key == pygame.K_q:  # 开始单词发音
                     self.pronunciation = True
 
@@ -67,12 +78,13 @@ class MainGame(object):  # 控制全局的参数
         self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
         self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
         self.pronunciation = False
+        self.check_spelling = False
 
     # 保证游戏可以正常运行
     def game_Loop(self):
         if self.Main_Game_Running:
             self.clock = pygame.time.Clock()
-            self.clock.tick(50)
+            self.clock.tick(80)
             self.window.blit(self.GAME_BACKGROUND_PICTURE, (0, 0))  # 每次都刷新屏幕
             self.check_Events()  # 获取游戏的事件
 
