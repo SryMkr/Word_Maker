@@ -22,11 +22,12 @@ class MainGame(object):  # 控制全局的参数
         self.mouse_click_y = 0  # 鼠标点击的位置
         self.mouse_rel_x = 0  # 鼠标移动的相对位置
         self.mouse_rel_y = 0  # 鼠标移动的相对位置
-        self.finished_tasks = {}  # 记录玩家已经完成的任务，及其最后一次的拼写
+        self.finished_tasks = {}  # 初始化玩家的拼写记录
         self.pronunciation_current_word_index = 0  # 记录发音记忆中，是第几个单词
         # 有时候图片太大，需要调整图片大小符合目标屏幕大小
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
                                                               (self.window_width, self.window_height))
+
         self.main_menu = MainMenu(self)  # 第一级菜单
         self.game_setting_menu = GameSetting(self)  # 实例化第二季菜单
         self.pronunciation_menu = PronunciationTest(self)  # 实例化发音菜单

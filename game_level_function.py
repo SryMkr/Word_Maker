@@ -1,15 +1,16 @@
 '''
 该函数的主要功能是 实现动态化单词关卡
 分数系统还需要继续思考，到底如何给分数，不然玩的越多分数越高不合理，要结合过了最难的那一关入手
-3：一轮结束以后 1：展示反馈  2：使得当前任务的索引回到第一个 3：停止展示游戏界面，但展示反馈结束以后要重新回到展示游戏界面 4：如果所有的单词都已经完成
+3：一轮结束以后  4：如果所有的单词都已经完成
 到了最难的一关，将本次学习的单词移除单词库
-4：开始思考轮数变化的问题
+
 '''
-import pygame
+
 
 from Common_Functions import *
 from datetime import datetime, timedelta
 import copy
+from feedback_training import GameFeedback
 
 
 # 实例化肯定是直接实例化库里的所有单词，因为所有的参数都已经确定了
@@ -216,7 +217,8 @@ class GameLevel(object):
         # 如果已经到了最后一个单词
         if self.task_index == len(self.tasks_parameters_list):
             self.task_index = 0  # 让任务是第一个
-            self.word_maker.current_menu = self.word_maker.feedback_train_menu
+            self.word_maker.feedback_train_menu = GameFeedback(self.word_maker)  # 实例化反馈菜单
+            self.word_maker.current_menu = self.word_maker.feedback_train_menu # 到反馈菜单
         # 如果机会已经用完了，而且最后一次的拼写还错误,而且拼写错误，也要展示5秒并跳到下一个任务
         if self.current_word not in self.player_used_spelling and \
                 len(self.player_used_spelling) == self.tasks_parameters_list[self.task_index][3]:
@@ -233,7 +235,9 @@ class GameLevel(object):
         # 如果已经到了最后一个单词
         if self.task_index == len(self.tasks_parameters_list):
             self.task_index = 0  # 让任务是第一个
-            self.word_maker.current_menu = self.word_maker.feedback_train_menu
+            self.word_maker.feedback_train_menu = GameFeedback(self.word_maker)  # 实例化反馈菜单
+            self.word_maker.current_menu = self.word_maker.feedback_train_menu  # 到反馈菜单
+
     # 实现画表格的功能, 在画线之前，要判断本次的单词的字母数，以及本关的难度
     def draw_Blocks(self, chance, word_length):
         self.Blocks_Rect = [[] for i in range(chance)]  # 按照行和列把每一个格都框起来
@@ -373,8 +377,8 @@ class GameLevel(object):
         # 操作指引
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '操作指引', 40, 720, 250)
         # 拖动单词
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '请将表格上方的字母', 30, 720, 302)
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '拖动到下面的方框中', 30, 720, 332)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '字母拖入框中拼写', 30, 720, 302)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '字母拖出框取消拼写', 30, 720, 332)
         # 操作指引
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '方框的行数代表机会', 30, 720, 372)
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '次数,请按行拖入字母', 30, 720, 402)
@@ -403,17 +407,24 @@ class GameLevel(object):
             self.show_Failure()
             # 展示5秒以后，进入下一个任务
             if self.gameplay_time > self.lock_time + 5000:
-                # 如果时间结束了,拼写不为空才记录最后一次的拼写
+                # 如果时间结束了,拼写不为空才记录最后一次的拼写,
                 if self.player_used_spelling:
                     # {单词：[音标，翻译，玩家拼写]}
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          self.player_used_spelling[-1]]
+                # 如果拼写为空
+                else:
+                    self.word_maker.finished_tasks[self.current_word] = \
+                        [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                         '未完成']
+
                 self.time_change = True  # 将开关打开
                 self.task_index += 1  # 并且进行到下一个任务
                 # 如果已经到了最后一个单词
                 if self.task_index == len(self.tasks_parameters_list):
                     self.task_index = 0  # 让任务是第一个
+                    self.word_maker.feedback_train_menu = GameFeedback(self.word_maker)  # 实例化反馈菜单
                     self.word_maker.current_menu = self.word_maker.feedback_train_menu
                 self.task_change = True  # 时间结束了需要切换单词
 
