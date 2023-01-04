@@ -1,10 +1,11 @@
 '''
 该函数的主要功能是 实现动态化单词关卡
-2：分数系统还需要继续思考，到底如何给分数，不然玩的越多分数越高不合理，要结合过了最难的那一关入手
-3：完成的任务显示在下方
-5：反馈界面展示所有正确的单词，但是展示玩家最后一次的拼写
+分数系统还需要继续思考，到底如何给分数，不然玩的越多分数越高不合理，要结合过了最难的那一关入手
+3：一轮结束以后 1：展示反馈  2：使得当前任务的索引回到第一个 3：停止展示游戏界面，但展示反馈结束以后要重新回到展示游戏界面 4：如果所有的单词都已经完成
+到了最难的一关，将本次学习的单词移除单词库
+4：开始思考轮数变化的问题
 '''
-
+import pygame
 
 from Common_Functions import *
 from datetime import datetime, timedelta
@@ -54,7 +55,7 @@ class GameLevel(object):
         self.player_used_spelling = []  # 用来记录玩家在某一关的所有拼写，主要使用给颜色反馈
         self.time_pause = False # 这个是为了让玩家在某一个任务结束后，时间不在减少
         self.lock_time = 0  # 当耗时结束，代表了没有完成任务，则锁定时间
-        self.finished_tasks = {}  # 记录玩家已经完成的任务，及其最后一次的拼写
+
 
     # 该函数的作用是将单词拆分为字母，并固定其初始的位置
     def split_Word(self, word):  # 首先输入一个单词
@@ -87,8 +88,9 @@ class GameLevel(object):
     # 该函数的作用是将所有的字母画到主屏幕上
     def draw_Letters(self):
         for key, coordinate in self.letter_coordinate.items():  # 循环读取{字母_顺序：坐标}
-            letter_surface = pygame.Surface((60, 60))  # 创建一个字母surface，背景颜色
-            letter_surface.fill((200, 0, 0))  # 将背景填充为表格中的颜色
+            # 直接加载背景图片
+            letter_surface = pygame.image.load('Game_Pictures/letter_background_color.png')
+            letter_surface.set_alpha(200)  # 设置surface的透明度
             letter = key.split('_')[0]  # 获得字母
             text_surface = self.font.render(letter, True, self.BLACK)  # 要写的文本，以及字体颜色
             text_rect = text_surface.get_rect()  # 相当于给当前的字母的surface 框起来 这样比较容易获得和使用参数
@@ -206,14 +208,15 @@ class GameLevel(object):
                     if self.gameplay_time > self.start_check_time + 5000:
                         self.player_spelling = []  # 将这个记录清空
                         # {单词：[音标，翻译，玩家拼写]}
-                        self.finished_tasks[self.current_word] = \
+                        self.word_maker.finished_tasks[self.current_word] = \
                             [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2], self.player_used_spelling[-1]]  # 这个是完全拼写正确
                         self.player_used_spelling = []  # 将过去的记录也清零，不然和下面得判定重复
                         self.task_change = True  # 修改参数
                         self.task_index += 1  # 并且进行到下一个任务
         # 如果已经到了最后一个单词
         if self.task_index == len(self.tasks_parameters_list):
-            self.task_index = len(self.tasks_parameters_list) - 1  # 让任务是最后一个
+            self.task_index = 0  # 让任务是第一个
+            self.word_maker.current_menu = self.word_maker.feedback_train_menu
         # 如果机会已经用完了，而且最后一次的拼写还错误,而且拼写错误，也要展示5秒并跳到下一个任务
         if self.current_word not in self.player_used_spelling and \
                 len(self.player_used_spelling) == self.tasks_parameters_list[self.task_index][3]:
@@ -221,7 +224,7 @@ class GameLevel(object):
                 self.time_pause = True  # 让进度条时间暂停
                 if self.gameplay_time > self.start_check_time + 5000:
                     # {单词：[音标，翻译，玩家拼写]}
-                    self.finished_tasks[self.current_word] = \
+                    self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          self.player_used_spelling[-1]]
                     self.player_spelling = []  # 将这个记录清空
@@ -229,23 +232,23 @@ class GameLevel(object):
                     self.task_index += 1  # 并且进行到下一个任务
         # 如果已经到了最后一个单词
         if self.task_index == len(self.tasks_parameters_list):
-            self.task_index = len(self.tasks_parameters_list) - 1  # 让任务是最后一个
-
+            self.task_index = 0  # 让任务是第一个
+            self.word_maker.current_menu = self.word_maker.feedback_train_menu
     # 实现画表格的功能, 在画线之前，要判断本次的单词的字母数，以及本关的难度
     def draw_Blocks(self, chance, word_length):
         self.Blocks_Rect = [[] for i in range(chance)]  # 按照行和列把每一个格都框起来
         self.Blocks_Surface = pygame.Surface(
-            (word_length * self.BLOCK_SIZE, chance * self.BLOCK_SIZE))  # 创建一个屏幕
+            (word_length * self.BLOCK_SIZE+2, chance * self.BLOCK_SIZE+2))  # 创建一个屏幕
         self.Blocks_Surface.fill((210, 210, 210))  # 填充屏幕的颜色
-
         # 这个循环是画横线的，代表的是给多少次机会
-        for j in range(1, chance, 1):
+        for j in range(0, chance+1, 1):
             pygame.draw.line(self.Blocks_Surface, (0, 0, 0), (0, j * self.BLOCK_SIZE),
-                             (word_length * self.BLOCK_SIZE, j * self.BLOCK_SIZE), 1)
+                             (word_length * self.BLOCK_SIZE, j * self.BLOCK_SIZE), 2)
         # 这个循环是画竖线的，代表的是这个单词有多少个字母
-        for i in range(1, word_length, 1):
+        for i in range(0, word_length+1, 1):
             pygame.draw.line(self.Blocks_Surface, (0, 0, 0), (i * self.BLOCK_SIZE, 0),
-                             (i * self.BLOCK_SIZE, chance * self.BLOCK_SIZE), 1)
+                             (i * self.BLOCK_SIZE, chance * self.BLOCK_SIZE), 2)
+
         # 获得每一个格子的Rect并存入列表中,并且纵坐标要加200匹配到图中的坐标
         for j in range(chance):
             for i in range(word_length):
@@ -290,6 +293,8 @@ class GameLevel(object):
 
         # 右边的线
         pygame.draw.line(self.game_level_surface, (0, 0, 0), (720, 0), (720, 743), 2)
+        # 右边中间的线
+        pygame.draw.line(self.game_level_surface, (0, 0, 0), (720, 250), (self.surface_width, 250), 2)
 
     def draw_Text(self, surface, font_path, size, text, font_color, center_x, center_y):
         font = pygame.font.Font(font_path, size)  # 得到想要用的字体，以及字体的大小
@@ -359,6 +364,34 @@ class GameLevel(object):
         # 当前任务难度
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '任务难度:'+str(self.tasks_parameters_list[self.task_index][8])+'级'
                             , 40, 720, 50)
+        # 展示当前得分
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前得分:', 40, 720, 100)
+        # 剩余任务数，展示本轮还剩多少单词
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '剩余任务:', 40, 720, 150)
+        # 记住单词，展示玩家已经记住的单词
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '记住单词:', 40, 720, 200)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '操作指引', 40, 720, 250)
+        # 拖动单词
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '请将表格上方的字母', 30, 720, 302)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '拖动到下面的方框中', 30, 720, 332)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '方框的行数代表机会', 30, 720, 372)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '次数,请按行拖入字母', 30, 720, 402)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '单词发音:Q键', 30, 720, 444)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '每行结束，按Enter', 30, 720, 486)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '键检查拼写', 30, 720, 516)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '红色:单词没有该字母', 30, 720, 558)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '黄色:单词中有该字母', 30, 720, 600)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '但位置不正确', 30, 720, 630)
+        # 操作指引
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '绿色:字母完全正确', 30, 720, 672)
+
+
         # 控制单词展示的时间
         if datetime.now() > self.start_time + timedelta(seconds=1):  # 如果时间间隔相差一秒
             self.start_time = datetime.now()  # 将现在的时间给过去的时间
@@ -373,14 +406,15 @@ class GameLevel(object):
                 # 如果时间结束了,拼写不为空才记录最后一次的拼写
                 if self.player_used_spelling:
                     # {单词：[音标，翻译，玩家拼写]}
-                    self.finished_tasks[self.current_word] = \
+                    self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          self.player_used_spelling[-1]]
                 self.time_change = True  # 将开关打开
                 self.task_index += 1  # 并且进行到下一个任务
                 # 如果已经到了最后一个单词
                 if self.task_index == len(self.tasks_parameters_list):
-                    self.task_index = len(self.tasks_parameters_list) - 1  # 让任务是最后一个
+                    self.task_index = 0  # 让任务是第一个
+                    self.word_maker.current_menu = self.word_maker.feedback_train_menu
                 self.task_change = True  # 时间结束了需要切换单词
 
     # 展示玩家已经完成的任务
@@ -388,7 +422,7 @@ class GameLevel(object):
         x_coordinate = 0  # 初始横坐标
         y_coordinate = 500  # 初始纵坐标
         # 获得所有的key
-        for key, items in self.finished_tasks.items():
+        for key, items in self.word_maker.finished_tasks.items():
             # 先画单词
             self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", key, 40, x_coordinate, y_coordinate)
             x_coordinate += 210
@@ -410,6 +444,7 @@ class GameLevel(object):
     # 展示所有的元素
     def display_menu(self):
         self.game_level_surface.fill(self.word_maker.BGC)  # 游戏的背景颜色
+        # 下面的代码在展示feedback的时候不运行
         self.show_Finished_Task()  # 展示玩家已经完成的任务，放在最底层
         self.gameplay_time = pygame.time.get_ticks()  # 记录游戏运行的时间
         self.draw_Blocks(self.tasks_parameters_list[self.task_index][3],
@@ -424,7 +459,6 @@ class GameLevel(object):
             self.time_change = True  # 要重新读取游戏时间
         self.check_Spelling()  # 检查玩家的拼写
         self.game_level_surface.blit(self.Blocks_Surface, (0, 200))  # 将表格画到主屏幕上，一定要在画字母之前
-
         self.draw_Letters()  # 往频幕上画字母
         self.letter_move()  # 移动字母
         # 展示字母及混淆字母

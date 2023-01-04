@@ -1,7 +1,7 @@
 import pygame  # 导入游戏包
 from pronunciation_test import PronunciationTest, IndividualWord  # 导入发音的包
 from main_game_function import *
-
+from feedback_training import *
 
 class MainGame(object):  # 控制全局的参数
     def __init__(self, window_width, window_height):  # 输入游戏屏幕的长度和宽度
@@ -22,6 +22,7 @@ class MainGame(object):  # 控制全局的参数
         self.mouse_click_y = 0  # 鼠标点击的位置
         self.mouse_rel_x = 0  # 鼠标移动的相对位置
         self.mouse_rel_y = 0  # 鼠标移动的相对位置
+        self.finished_tasks = {}  # 记录玩家已经完成的任务，及其最后一次的拼写
         self.pronunciation_current_word_index = 0  # 记录发音记忆中，是第几个单词
         # 有时候图片太大，需要调整图片大小符合目标屏幕大小
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
@@ -32,6 +33,7 @@ class MainGame(object):  # 控制全局的参数
         self.pronunciation_individual_menu = IndividualWord(self)  # 实例化独立发音菜单
         self.present_word_menu = PresentWords(self)  # 实例化展示单词菜单
         self.present_all_word_menu = PresentAllTasks(self)  # 实例化展示单词菜单
+        self.feedback_train_menu = GameFeedback(self)  # 实例化反馈菜单
         self.pronunciation_menu_chance = False  # 用于转换单词
         self.main_menu_chance = False  # 用来控制主菜单响应
         self.game_setting_menu_chance = False  # 用来控制主菜单响应
@@ -42,6 +44,7 @@ class MainGame(object):  # 控制全局的参数
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
         self.click_event = False  # 判断当前鼠标点击没有
         self.check_spelling = False # 检查拼写
+
 
     # 检查事件，鼠标事件
     def check_Events(self):
