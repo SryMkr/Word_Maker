@@ -1,9 +1,9 @@
 '''
-第一，每一轮结束之后要清空finished task里面的记录
-第二 为什么下一轮的进度条不变化了
+
 '''
 
-from game_level_function import *
+import pygame
+from datetime import datetime, timedelta
 
 
 class GameFeedback(object):
@@ -16,8 +16,8 @@ class GameFeedback(object):
         # 要从游戏主题内容继承到玩家的拼写记录
         self.finished_tasks = self.word_maker.finished_tasks
         self.start_time = datetime.now()  # 玩游戏开始的时间  # 记录什么时候开始看反馈的
-        self.countdown = 60  # 初始化倒计时，用来记录已经过了多久
-        self.feedback_time = 60  # 反馈展示60秒
+        self.countdown = 3  # 初始化倒计时，用来记录已经过了多久
+        self.feedback_time = 3  # 反馈展示60秒
         self.decrease_width = self.surface_width / self.feedback_time  # 1秒减少多少宽度
 
         self.x_increase = 250  # 横坐标的增量
@@ -84,7 +84,9 @@ class GameFeedback(object):
             self.countdown -= 1
             if self.countdown == -1:  # 如果时间结束，则进入游戏界面
                 self.word_maker.finished_tasks = {}  # 每一轮结束以后，要将这轮的记录清零
-                self.word_maker.current_menu = self.word_maker.game_level_menu
+                from game_level_function import GameLevel  # python无法重复导入，所以只能在使用的地方再导入
+                self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 重新读取游戏文件
+                self.word_maker.current_menu = self.word_maker.game_level_menu  # 重新回到游戏界面
 
     # 展示所有的元素
     def display_menu(self):

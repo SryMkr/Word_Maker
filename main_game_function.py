@@ -2,8 +2,6 @@
 实现莱特纳系统，选择单词库
 '''
 import pygame.draw
-from Common_Functions import *
-from datetime import datetime, timedelta
 from game_level_function import *
 
 
@@ -155,6 +153,6 @@ class PresentAllTasks(object):
             self.start_time = datetime.now()  # 将现在的时间给过去的时间
             self.countdown_all_tasks -= 1
             if self.countdown_all_tasks == -1:  # 如果时间结束，则进入游戏界面
-                self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 实例化游戏界面,第一个参数是机会次数
+                self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 重新实例化游戏界面
                 self.word_maker.current_menu = self.word_maker.game_level_menu
 
