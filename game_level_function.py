@@ -1,8 +1,7 @@
 '''
 该函数的主要功能是 实现动态化单词关卡
 分数系统还需要继续思考，到底如何给分数，不然玩的越多分数越高不合理，要结合过了最难的那一关入手
-1：实现轮数的递减，复原原始游戏的功能
-3：一轮结束以后  如果单词都已经完成到了最难的一关，将本次学习的单词移除单词库
+
 
 '''
 
@@ -15,16 +14,15 @@ from feedback_training import GameFeedback
 
 # 实例化肯定是直接实例化库里的所有单词，因为所有的参数都已经确定了
 class GameLevel(object):
-    # 单词，音标，汉语，机会次数，单词长度，时间，是否展示任务，是否展示英标 （应该是一个单词一组），有无迷惑字母
-
-
     # 游戏关卡里有几个重要的参数，第一个机会次数,第二个参数是单词的长度
     def __init__(self, word_maker):
         self.word_maker = word_maker  # 得到主游戏
         self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         # 创建一个和主屏幕大小一样的Surface
         self.game_level_surface = pygame.Surface((self.surface_width, self.surface_height))
-        self.tasks_parameters_list = read_tasks_parameters('Word_Pool/game_level.xls')
+        # 单词，音标，汉语，机会次数，单词长度，时间，是否展示任务，是否展示英标 （应该是一个单词一组），有无迷惑字母
+        self.tasks_parameters_list = read_tasks_parameters('Word_Pool/game_level_'+str(self.word_maker.current_loop)+
+                                                           '.xls')
         # 这个字典用来选择迷惑字母
         self.letters_dic = {'a': ['e', 'i', 'o', 'u', 'y'], 'b': ['d', 'p', 'q', 't'], 'c': ['k', 's', 't', 'z'],
                             'd': ['b', 'p', 'q', 't'],
@@ -35,7 +33,6 @@ class GameLevel(object):
                             'p': ['b', 'd', 'q', 't'], 'q': ['b', 'd', 'p', 't'], 'r': ['l', 'v'], 's': ['c', 'z'],
                             't': ['c', 'd'], 'u': ['v', 'w'],
                             'v': ['f', 'u', 'w'], 'w': ['f', 'v'], 'x': ['s', 'z'], 'y': ['e', 'i'], 'z': ['c', 's']}
-        print('a')
         self.BLOCK_SIZE = 90  # 设置框的大小
         self.task_index = 0  # 追踪当前是第几个任务
         self.start_time = datetime.now()  # 玩游戏开始的时间

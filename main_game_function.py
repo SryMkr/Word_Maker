@@ -7,11 +7,10 @@ from game_level_function import *
 
 # 首先在游戏之前展示单词的功能
 class PresentWords(object):
-    # 读取文件中的单词，音标，翻译
-    words, phonetic, chinese_character = read_xls_shuffle('Word_Pool/Current_Deck.xls')
-
     # 主要是定义一些global variable 都可以使用或者修改
     def __init__(self, work_maker):
+        # 读取文件中的单词，音标，翻译
+        self.words, self.phonetic, self.chinese_character = read_xls_shuffle('Word_Pool/Current_Deck.xls')
         self.word_maker = work_maker  # 得到主游戏
         self.surface_width, self.surface_height = work_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface
@@ -49,7 +48,9 @@ class PresentWords(object):
             self.words_pictures = pygame.image.load("Word_Pictures/" + self.words[self.current_task_index] + '.png')
             self.words_pictures = pygame.transform.scale(self.words_pictures, (300, 300))
             self.present_words_surface.blit(self.words_pictures, (self.surface_width / 2-150, self.surface_height / 2 - 65))
-
+            # 按Q可以发音
+            if self.word_maker.pronunciation:
+                game_Sound('UK_Pronunciation/' + self.words[self.current_task_index] + '.mp3')
             # 画一个progress bar，控制学习时间
             pygame.draw.rect(self.present_words_surface, (0, 0, 0), ((0, self.surface_height-60), (self.surface_width, 50)),
                              width=4)  # 首先画一个边框
@@ -66,7 +67,9 @@ class PresentWords(object):
                 pygame.draw.rect(self.present_words_surface, (170, 170, 170),
                                  ((seconds * self.decrease_width, self.surface_height - 56),
                                   (self.surface_width - seconds * self.decrease_width, 42)))  # 画进度条
-
+            # 提示按钮，按Q可以发音
+            self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '按Q发音', 50, self.surface_width - 100,
+                                                   self.surface_height - 200, (150, 150, 150))
             # 跳过单词单词按钮，学生觉得自己这个单词已经学习的很好，可以跳过当前单词
             skip_task_button = self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '跳过单词', 50, self.surface_width-100,
                                                    self.surface_height - 130, (150, 150, 150))  # 创建一个返回的按钮功能，放到左下角的位置
@@ -79,6 +82,7 @@ class PresentWords(object):
                 self.current_task_index += 1  # 展示单词阶段任务索引
                 self.count_seconds = self.countdown  # 从30秒重新倒数
                 if self.current_task_index == len(self.words):  # 如果已经是最后一个单词
+                    self.word_maker.present_all_word_menu = PresentAllTasks(self.word_maker)  # 实例化展示单词菜单
                     self.word_maker.current_menu = self.word_maker.present_all_word_menu
             self.word_maker.window.blit(self.present_words_surface, (0, 0))  # 将发音学习画到主游戏上
 
@@ -93,15 +97,15 @@ class PresentWords(object):
                     self.current_task_index += 1  # 换到下一个单词
                     self.count_seconds = self.countdown  # 从30秒重新倒数
                     if self.current_task_index > len(self.words) - 1:  # 如果展示结束，展示所有单词
+                        self.word_maker.present_all_word_menu = PresentAllTasks(self.word_maker)  # 实例化展示单词菜单
                         self.word_maker.current_menu = self.word_maker.present_all_word_menu  # 跳到展示所有单词的界面
 
 
 # 在每个单词展示结束以后，再次展示所有的单词120秒
 class PresentAllTasks(object):
-    # 读取文件中的单词，音标，翻译
-    words, phonetic, chinese_character = read_xls_shuffle('Word_Pool/Current_Deck.xls')
-
     def __init__(self, work_maker):  # 参数一定是实例化的游戏
+        # 读取文件中的单词，音标，翻译
+        self.words, self.phonetic, self.chinese_character = read_xls_shuffle('Word_Pool/Current_Deck.xls')
         self.word_maker = work_maker  # 得到主游戏
         self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface

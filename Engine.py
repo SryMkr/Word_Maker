@@ -1,7 +1,8 @@
-import pygame  # 导入游戏包
+
 from pronunciation_test import PronunciationTest, IndividualWord  # 导入发音的包
 from main_game_function import *
 from feedback_training import *
+
 
 class MainGame(object):  # 控制全局的参数
     def __init__(self, window_width, window_height):  # 输入游戏屏幕的长度和宽度
@@ -15,7 +16,7 @@ class MainGame(object):  # 控制全局的参数
         self.Main_Game_Running = True  # 控制主游戏的运行
         self.Menu_Font = "Game_Fonts/chinese_pixel_font.TTF"  # 菜单的字体
         self.WHITE = (255, 255, 255)  # 设置一个白色
-        self.BGC = (200, 200, 200) # 设置游戏的背景颜色
+        self.BGC = (200, 200, 200)  # 设置游戏的背景颜色
         self.mouse_current_x = 0  # 鼠标当前的位置
         self.mouse_current_y = 0  # 鼠标当前的位置
         self.mouse_click_x = 0  # 鼠标点击的位置
@@ -32,8 +33,8 @@ class MainGame(object):  # 控制全局的参数
         self.game_setting_menu = GameSetting(self)  # 实例化第二季菜单
         self.pronunciation_menu = PronunciationTest(self)  # 实例化发音菜单
         self.pronunciation_individual_menu = IndividualWord(self)  # 实例化独立发音菜单
-        self.present_word_menu = PresentWords(self)  # 实例化展示单词菜单
-        self.present_all_word_menu = PresentAllTasks(self)  # 实例化展示单词菜单
+        # self.present_word_menu = PresentWords(self)  # 实例化展示单词菜单
+        # self.present_all_word_menu = PresentAllTasks(self)  # 实例化展示单词菜单
         self.feedback_train_menu = GameFeedback(self)  # 实例化反馈菜单
         self.pronunciation_menu_chance = False  # 用于转换单词
         self.main_menu_chance = False  # 用来控制主菜单响应
@@ -41,11 +42,10 @@ class MainGame(object):  # 控制全局的参数
         self.present_word_menu_chance = False  # 控制展示单词菜单
         self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
         self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
-        # self.pronunciation = False # 单词默认不发音
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
         self.click_event = False  # 判断当前鼠标点击没有
         self.check_spelling = False # 检查拼写
-
+        self.current_loop = 0  # 用来记录当前是第几轮循环
 
     # 检查事件，鼠标事件
     def check_Events(self):
@@ -121,6 +121,7 @@ class CreateMenu(object):
 class MainMenu(CreateMenu):
     def __init__(self, word_maker):  # 参数一定是实例化的游戏
         CreateMenu.__init__(self, word_maker)
+        self.word_maker = word_maker  # 得到主游戏的屏幕
         self.image_1 = self.load_Image('Game_Pictures/menu.png')  # 开始游戏
         self.menu_image_1 = pygame.transform.scale(self.image_1, (220, 110))
         self.image_rect_1 = self.menu_image_1.get_rect()  # 获得image的参数
@@ -153,8 +154,10 @@ class MainMenu(CreateMenu):
         if self.image_rect_1.collidepoint(self.word_maker.mouse_click_x - self.image_rect_2.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_2.height / 2) and \
                 self.word_maker.main_menu_chance:
+            self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 每一次点击开始游戏都要重新初始化展示单词菜单
+            self.word_maker.current_loop = 0  # 每次点击开始打游戏都要将轮数初始化
             self.word_maker.current_menu = self.word_maker.present_word_menu  # # 如果鼠标点击的这个位置在方块2中，进入下一级菜单
-        self.display_Menu(self.menu_image_1, self.image_rect_1.center) # 将‘开始游戏画到屏幕上’
+        self.display_Menu(self.menu_image_1, self.image_rect_1.center)  # 将‘开始游戏画到屏幕上’
         # -------------------------------------------------------------------------
         # ‘游戏设置’模块
         self.image_rect_2.center = (

@@ -1,5 +1,8 @@
 '''
 
+3：一轮结束以后  如果单词都已经完成到了最难的一关，将本次学习的单词移除单词库。这个将是动态的
+4:sapced repetition
+5:动态的过程
 '''
 
 import pygame
@@ -84,9 +87,13 @@ class GameFeedback(object):
             self.countdown -= 1
             if self.countdown == -1:  # 如果时间结束，则进入游戏界面
                 self.word_maker.finished_tasks = {}  # 每一轮结束以后，要将这轮的记录清零
-                from game_level_function import GameLevel  # python无法重复导入，所以只能在使用的地方再导入
-                self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 重新读取游戏文件
-                self.word_maker.current_menu = self.word_maker.game_level_menu  # 重新回到游戏界面
+                self.word_maker.current_loop += 1  # 将当前的轮数加一
+                if self.word_maker.current_loop == 3:  # 如果已经超出了轮数
+                    self.word_maker.current_menu = self.word_maker.main_menu  # 重新回到主菜单，相当于本次的学习已经结束
+                else:
+                    from game_level_function import GameLevel  # python无法重复导入，所以只能在使用的地方再导入
+                    self.word_maker.game_level_menu = GameLevel(self.word_maker)  # 重新读取游戏文件
+                    self.word_maker.current_menu = self.word_maker.game_level_menu  # 重新回到游戏界面
 
     # 展示所有的元素
     def display_menu(self):
