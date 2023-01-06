@@ -24,6 +24,7 @@ class MainGame(object):  # 控制全局的参数
         self.mouse_rel_x = 0  # 鼠标移动的相对位置
         self.mouse_rel_y = 0  # 鼠标移动的相对位置
         self.finished_tasks = {}  # 初始化玩家的拼写记录
+        self.all_tasks = {}  # 用来记录玩家本次学习的所有记录，满足学习所有，测试不会的功能
         self.pronunciation_current_word_index = 0  # 记录发音记忆中，是第几个单词
         # 有时候图片太大，需要调整图片大小符合目标屏幕大小
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,

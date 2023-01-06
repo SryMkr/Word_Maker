@@ -1,4 +1,4 @@
-import xlrd  # 操作excel表格
+import xlrd, xlwt  # 操作excel表格
 from numpy import random  # 导入随即包
 import pygame
 
@@ -50,3 +50,33 @@ def read_tasks_parameters(path):
         task_parameters_list.append(parameters_list)
     print(task_parameters_list)
     return task_parameters_list
+
+
+# 如果玩家最难的的关过了，那么将该单词删除任务库
+def remove_tasks_xls(path, wordlist):
+    i = 0
+    # open workbook
+    workbook = xlrd.open_workbook(path)
+    # get all sheets by sheet names
+    sheets = workbook.sheet_names()
+    # get the first sheet
+    worksheet = workbook.sheet_by_name(sheets[0])
+    # 创建一个空的表格
+    new_workbook = xlwt.Workbook()
+    # 创建一个空的表单
+    new_worksheet = new_workbook.add_sheet('sheet1')
+    # 得到所有单词
+    words = worksheet.col_values(0)
+    # 如果已经记住的单词在原来的单词表中
+    for word in words:
+        if word not in wordlist:
+            # 取得这个单词在原单词表中的索引
+            word_index = words.index(word)
+            # 根据索引得到这个值
+            values = worksheet.row_values(word_index)
+            # 将这个单词所有参数写入新的表格中
+            for value_index in range(len(values)):
+                new_worksheet.write(i, value_index, values[value_index])
+            i = i + 1
+    # save file
+    new_workbook.save(path)

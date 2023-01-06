@@ -1,5 +1,5 @@
 '''
-实现莱特纳系统，选择单词库
+实现莱特纳系统，选择单词库 每一轮结束了所有的单词都需要重新读取词库
 '''
 import pygame.draw
 from game_level_function import *

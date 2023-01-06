@@ -20,7 +20,7 @@ class GameLevel(object):
         self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         # 创建一个和主屏幕大小一样的Surface
         self.game_level_surface = pygame.Surface((self.surface_width, self.surface_height))
-        # 单词，音标，汉语，机会次数，单词长度，时间，是否展示任务，是否展示英标 （应该是一个单词一组），有无迷惑字母
+        # 单词，音标，汉语，机会次数，单词长度，时间，是否展示任务，是否展示英标 （应该是一个单词一组），单词难度，有无迷惑字母
         self.tasks_parameters_list = read_tasks_parameters('Word_Pool/game_level_'+str(self.word_maker.current_loop)+
                                                            '.xls')
         # 这个字典用来选择迷惑字母
@@ -206,9 +206,14 @@ class GameLevel(object):
                     self.time_pause = True  # 让进度条时间暂停
                     if self.gameplay_time > self.start_check_time + 5000:
                         self.player_spelling = []  # 将这个记录清空
-                        # {单词：[音标，翻译，玩家拼写]}
+                        # {单词：[音标，翻译，玩家拼写, 当前难度]}，这是为了测试玩家不会的单词
                         self.word_maker.finished_tasks[self.current_word] = \
-                            [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2], self.player_used_spelling[-1]]  # 这个是完全拼写正确
+                            [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                             self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][8]]  # 这个是完全拼写正确
+                        # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
+                        self.word_maker.all_tasks[self.current_word] = \
+                            [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                             self.player_used_spelling[-1]]
                         self.player_used_spelling = []  # 将过去的记录也清零，不然和下面得判定重复
                         self.task_change = True  # 修改参数
                         self.task_index += 1  # 并且进行到下一个任务
@@ -223,8 +228,12 @@ class GameLevel(object):
                 self.show_Failure()  # 回答错误错误显示的反馈
                 self.time_pause = True  # 让进度条时间暂停
                 if self.gameplay_time > self.start_check_time + 5000:
-                    # {单词：[音标，翻译，玩家拼写]}
+                    # {单词：[音标，翻译，玩家拼写，任务难度]}
                     self.word_maker.finished_tasks[self.current_word] = \
+                        [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                         self.player_used_spelling[-1],self.tasks_parameters_list[self.task_index][8]]
+                    # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
+                    self.word_maker.all_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          self.player_used_spelling[-1]]
                     self.player_spelling = []  # 将这个记录清空
@@ -407,16 +416,23 @@ class GameLevel(object):
             if self.gameplay_time > self.lock_time + 5000:
                 # 如果时间结束了,拼写不为空才记录最后一次的拼写,
                 if self.player_used_spelling:
-                    # {单词：[音标，翻译，玩家拼写]}
+                    # {单词：[音标，翻译，玩家拼写，任务难度]}
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                         self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][8]]
+                    # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
+                    self.word_maker.all_tasks[self.current_word] = \
+                        [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          self.player_used_spelling[-1]]
-                # 如果拼写为空
+                # 如果拼写为空# {单词：[音标，翻译，未完成，任务难度]}
                 else:
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
+                         '未完成', self.tasks_parameters_list[self.task_index][8]]
+                    # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
+                    self.word_maker.all_tasks[self.current_word] = \
+                        [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
                          '未完成']
-
                 self.time_change = True  # 将开关打开
                 self.task_index += 1  # 并且进行到下一个任务
                 # 如果已经到了最后一个单词
