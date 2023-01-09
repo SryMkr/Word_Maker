@@ -2,6 +2,7 @@
 from pronunciation_test import PronunciationTest, IndividualWord  # 导入发音的包
 from main_game_function import *
 from feedback_training import *
+from Common_Functions import read_excel_game_record, write_excel_game_record, select_tasks
 
 
 class MainGame(object):  # 控制全局的参数
@@ -34,8 +35,6 @@ class MainGame(object):  # 控制全局的参数
         self.game_setting_menu = GameSetting(self)  # 实例化第二季菜单
         self.pronunciation_menu = PronunciationTest(self)  # 实例化发音菜单
         self.pronunciation_individual_menu = IndividualWord(self)  # 实例化独立发音菜单
-        # self.present_word_menu = PresentWords(self)  # 实例化展示单词菜单
-        # self.present_all_word_menu = PresentAllTasks(self)  # 实例化展示单词菜单
         self.feedback_train_menu = GameFeedback(self)  # 实例化反馈菜单
         self.pronunciation_menu_chance = False  # 用于转换单词
         self.main_menu_chance = False  # 用来控制主菜单响应
@@ -45,8 +44,11 @@ class MainGame(object):  # 控制全局的参数
         self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
         self.click_event = False  # 判断当前鼠标点击没有
-        self.check_spelling = False # 检查拼写
+        self.check_spelling = False  # 检查拼写
         self.current_loop = 0  # 用来记录当前是第几轮循环
+        self.game_record = read_excel_game_record('saved_files/game_record.xls')  # 读取游戏的一些记录,返回的是列表
+        self.learning_session_code = self.game_record[0]  # 第几次学习，初始化为-1，每次开始学习都+1
+        self.save_game_record = []  # 点击结束游戏以后要保存一些参数
 
     # 检查事件，鼠标事件
     def check_Events(self):
@@ -157,6 +159,11 @@ class MainMenu(CreateMenu):
                 self.word_maker.main_menu_chance:
             self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 每一次点击开始游戏都要重新初始化展示单词菜单
             self.word_maker.current_loop = 0  # 每次点击开始打游戏都要将轮数初始化
+            self.word_maker.learning_session_code = int(self.word_maker.learning_session_code) + 1  # 每次点加开始游戏都代表session_code增加
+            select_tasks(self.word_maker.learning_session_code)  # 挑选要玩的任务
+            print(self.word_maker.learning_session_code)
+            if str(self.word_maker.learning_session_code) == '10':  # 如果learning session 到了10 要重新从0开始计数
+                self.word_maker.learning_session_code = 0
             self.word_maker.current_menu = self.word_maker.present_word_menu  # # 如果鼠标点击的这个位置在方块2中，进入下一级菜单
         self.display_Menu(self.menu_image_1, self.image_rect_1.center)  # 将‘开始游戏画到屏幕上’
         # -------------------------------------------------------------------------
@@ -211,6 +218,9 @@ class MainMenu(CreateMenu):
         if self.image_rect_3.collidepoint(self.word_maker.mouse_click_x - self.image_rect_3.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_3.height / 2) and \
                 self.word_maker.main_menu_chance:
+            # 点击结束游戏要保存一些游戏记录,第一个session_code
+            self.word_maker.save_game_record = [str(self.word_maker.learning_session_code)]
+            write_excel_game_record('saved_files/game_record.xls', self.word_maker.save_game_record)  # 将游戏记录写入到文件中
             self.word_maker.Main_Game_Running = False  # 直接退出游戏
         self.display_Menu(self.menu_image_3, self.image_rect_3.center)  # 将结束游戏画到菜单上
 

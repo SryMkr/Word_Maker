@@ -8,7 +8,7 @@
 
 import pygame
 from datetime import datetime, timedelta
-from Common_Functions import remove_tasks_xls
+from Common_Functions import remove_tasks_xls, write_learned_words_to_file, write_leaned_words_xls
 
 
 class GameFeedback(object):
@@ -40,14 +40,18 @@ class GameFeedback(object):
 
     # 匹配玩家已经学会的单词，并在测试列表中删除
     def remove_learned_words(self):
-        # {单词，[音标，汉语，玩家拼写，任务难度]}
         for key, items in self.finished_tasks.items():
             # 条件1：如果正确拼写和玩家的拼写一样 条件2：本次任务的难度是最高难度
             if key == items[2] and str(items[3]) == '4':
                 self.learned_words.append(key)
+            # 在这里需要记录一个变量，来记录所有的参数，用列表来记录 (单词，音标，汉语，标记)
+                word_parameters = [key, items[0], items[1], items[4]]
+            # # 并且将这个单词移动到与session对应的单词库 在这里输入的参数是当前的session和word_parameter
+                labels, tasks = write_learned_words_to_file(word_parameters, str(self.word_maker.learning_session_code))
+                print(labels, tasks)
+                write_leaned_words_xls(labels, tasks)  # 执行写入操作
         # 将已经记住的单词移除单词库
         remove_tasks_xls('Word_Pool/game_level_'+str(self.word_maker.current_loop)+'.xls', self.learned_words)
-        print(self.learned_words)
 
     # 展示玩家的拼写记录
     def finished_Tasks(self):
