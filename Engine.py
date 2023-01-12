@@ -157,11 +157,11 @@ class MainMenu(CreateMenu):
         if self.image_rect_1.collidepoint(self.word_maker.mouse_click_x - self.image_rect_2.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_2.height / 2) and \
                 self.word_maker.main_menu_chance:
-            self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 每一次点击开始游戏都要重新初始化展示单词菜单
-            self.word_maker.current_loop = 0  # 每次点击开始打游戏都要将轮数初始化
             self.word_maker.learning_session_code = int(self.word_maker.learning_session_code) + 1  # 每次点加开始游戏都代表session_code增加
-            select_tasks(self.word_maker.learning_session_code)  # 挑选要玩的任务
+            select_tasks(self.word_maker.learning_session_code)  # 挑选要玩的任务,但是有可能单词没写进去
             print(self.word_maker.learning_session_code)
+            self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 必须先写晚间再初始化每一次点击开始游戏都要重新初始化展示单词菜单
+            self.word_maker.current_loop = 0  # 每次点击开始打游戏都要将轮数初始化
             if str(self.word_maker.learning_session_code) == '10':  # 如果learning session 到了10 要重新从0开始计数
                 self.word_maker.learning_session_code = 0
             self.word_maker.current_menu = self.word_maker.present_word_menu  # # 如果鼠标点击的这个位置在方块2中，进入下一级菜单
@@ -218,9 +218,7 @@ class MainMenu(CreateMenu):
         if self.image_rect_3.collidepoint(self.word_maker.mouse_click_x - self.image_rect_3.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_3.height / 2) and \
                 self.word_maker.main_menu_chance:
-            # 点击结束游戏要保存一些游戏记录,第一个session_code
-            self.word_maker.save_game_record = [str(self.word_maker.learning_session_code)]
-            write_excel_game_record('saved_files/game_record.xls', self.word_maker.save_game_record)  # 将游戏记录写入到文件中
+
             self.word_maker.Main_Game_Running = False  # 直接退出游戏
         self.display_Menu(self.menu_image_3, self.image_rect_3.center)  # 将结束游戏画到菜单上
 

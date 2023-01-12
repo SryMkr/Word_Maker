@@ -4,7 +4,8 @@
 
 import pygame
 from datetime import datetime, timedelta
-from Common_Functions import remove_tasks_xls, write_learned_words_to_file, write_leaned_words_xls
+from Common_Functions import remove_tasks_xls, write_learned_words_to_file, write_leaned_words_xls, \
+    reconstruct_tasks_and_difficulty,write_excel_game_record
 
 
 class GameFeedback(object):
@@ -42,12 +43,14 @@ class GameFeedback(object):
                 self.learned_words.append(key)
             # 在这里需要记录一个变量，来记录所有的参数，用列表来记录 (单词，音标，汉语，标记)
                 word_parameters = [key, items[0], items[1], items[4]]
-            # # 并且将这个单词移动到与session对应的单词库 在这里输入的参数是当前的session和word_parameter
+            # 并且将这个单词移动到与session对应的单词库 在这里输入的参数是当前的session和word_parameter
                 labels, tasks = write_learned_words_to_file(word_parameters, str(self.word_maker.learning_session_code))
                 print(labels, tasks)
                 write_leaned_words_xls(labels, tasks)  # 执行写入操作
         # 将已经记住的单词移除单词库
-        remove_tasks_xls('Word_Pool/game_level_'+str(self.word_maker.current_loop)+'.xls', self.learned_words)
+        remove_tasks_xls('Word_Pool/game_level_0.xls', self.learned_words)
+        # 重新组合剩余的单词和对应的难度，供下一轮使用，也就是要重写任务单词的库
+        reconstruct_tasks_and_difficulty()
 
     # 展示玩家的拼写记录
     def finished_Tasks(self):
@@ -108,6 +111,10 @@ class GameFeedback(object):
                 self.word_maker.current_loop += 1  # 将当前的轮数加一
                 if self.word_maker.current_loop == 3:  # 如果已经超出了轮数
                     self.word_maker.all_tasks = {}  # 每次所有的单词学习结束，都要将里面的内容清空，因为会读取新的单词
+                    # 每一轮结束以后都要即时更新session的参数
+                    self.word_maker.save_game_record = [str(self.word_maker.learning_session_code)]
+                    write_excel_game_record('saved_files/game_record.xls',
+                                            self.word_maker.save_game_record)  # 将游戏记录写入到文件中
                     self.word_maker.current_menu = self.word_maker.main_menu  # 重新回到主菜单，相当于本次的学习已经结束
                 else:
                     from game_level_function import GameLevel  # python无法重复导入，所以只能在使用的地方再导入

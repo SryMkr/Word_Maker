@@ -36,7 +36,6 @@ class PresentWords(object):
             # 画一个单词目录
             self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '单词展示，每个单词展示30秒', 50, self.surface_width / 2, 30,
                                 (150, 150, 150))
-
             # 将当前的单词，音标，汉字画到面板上
             self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", self.words[self.current_task_index],
                                 80, self.surface_width / 2, self.surface_height / 8 + 10)

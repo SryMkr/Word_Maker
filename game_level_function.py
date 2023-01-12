@@ -19,8 +19,8 @@ class GameLevel(object):
         # 创建一个和主屏幕大小一样的Surface
         self.game_level_surface = pygame.Surface((self.surface_width, self.surface_height))
         # 单词，音标，汉语，机会次数，单词长度，时间，是否展示任务，是否展示英标 （应该是一个单词一组），单词难度，有无迷惑字母,文件label
-        self.tasks_parameters_list = read_tasks_parameters('Word_Pool/game_level_'+str(self.word_maker.current_loop)+
-                                                           '.xls')
+        # 英文，音标，汉语，文件标记，单词长度，难度，机会次数，是否有中文，时间，是否有迷惑字母，是否有音标
+        self.tasks_parameters_list = read_tasks_parameters('Word_Pool/game_level_0.xls')
         # 这个字典用来选择迷惑字母
         self.letters_dic = {'a': ['e', 'i', 'o', 'u', 'y'], 'b': ['d', 'p', 'q', 't'], 'c': ['k', 's', 't', 'z'],
                             'd': ['b', 'p', 'q', 't'],
@@ -191,8 +191,8 @@ class GameLevel(object):
             self.player_spelling = []  # 将这个记录清空
             self.current_attempt += 1
             # 索引不能操作机会次数
-            if self.current_attempt == self.tasks_parameters_list[self.task_index][3]:
-                self.current_attempt = self.tasks_parameters_list[self.task_index][3]-1
+            if self.current_attempt == self.tasks_parameters_list[self.task_index][6]:
+                self.current_attempt = self.tasks_parameters_list[self.task_index][6]-1
 
         # 如果玩家的拼写不为空，则将内容一直展示到频幕上
         if self.player_used_spelling:
@@ -207,7 +207,7 @@ class GameLevel(object):
                         # {单词：[音标，翻译，玩家拼写, 当前难度, 文件label]}，这是为了测试玩家不会的单词
                         self.word_maker.finished_tasks[self.current_word] = \
                             [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
-                             self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][8],self.tasks_parameters_list[self.task_index][10]]  # 这个是完全拼写正确
+                             self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][5],self.tasks_parameters_list[self.task_index][3]]  # 这个是完全拼写正确
                         # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
                         self.word_maker.all_tasks[self.current_word] = \
                             [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
@@ -222,14 +222,14 @@ class GameLevel(object):
             self.word_maker.current_menu = self.word_maker.feedback_train_menu # 到反馈菜单
         # 如果机会已经用完了，而且最后一次的拼写还错误,而且拼写错误，也要展示5秒并跳到下一个任务
         if self.current_word not in self.player_used_spelling and \
-                len(self.player_used_spelling) == self.tasks_parameters_list[self.task_index][3]:
+                len(self.player_used_spelling) == self.tasks_parameters_list[self.task_index][6]:
                 self.show_Failure()  # 回答错误错误显示的反馈
                 self.time_pause = True  # 让进度条时间暂停
                 if self.gameplay_time > self.start_check_time + 5000:
                     # {单词：[音标，翻译，玩家拼写，任务难度,文件label]}
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
-                         self.player_used_spelling[-1],self.tasks_parameters_list[self.task_index][8],self.tasks_parameters_list[self.task_index][10]]
+                         self.player_used_spelling[-1],self.tasks_parameters_list[self.task_index][5],self.tasks_parameters_list[self.task_index][3]]
                     # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
                     self.word_maker.all_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
@@ -284,13 +284,13 @@ class GameLevel(object):
     # 是否展示汉语翻译以及音标
     def draw_word_parameters(self):
         #  是否展示任务
-        if self.tasks_parameters_list[self.task_index][6]:
+        if self.tasks_parameters_list[self.task_index][7]:
             self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前任务:' +
                                 self.tasks_parameters_list[self.task_index][2], 40, 0, 0)
         else:
             pass
         # 是否展示音标
-        if self.tasks_parameters_list[self.task_index][7]:
+        if self.tasks_parameters_list[self.task_index][10]:
             self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '音标:', 40, 340, 0)
             self.draw_Left_Text("Game_Fonts/phonetic.ttf", self.tasks_parameters_list[self.task_index][1],
                                 30, 440, 0)
@@ -369,9 +369,9 @@ class GameLevel(object):
 
         # 展示任务时长
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '任务时长:' +
-                            str(self.tasks_parameters_list[self.task_index][5])+'秒', 40, 720, 0)
+                            str(self.tasks_parameters_list[self.task_index][8])+'秒', 40, 720, 0)
         # 当前任务难度
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '任务难度:'+str(self.tasks_parameters_list[self.task_index][8])+'级'
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '任务难度:'+str(self.tasks_parameters_list[self.task_index][5])+'级'
                             , 40, 720, 50)
         # 展示当前得分
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前得分:', 40, 720, 100)
@@ -417,7 +417,7 @@ class GameLevel(object):
                     # {单词：[音标，翻译，玩家拼写，任务难度,文件label]}
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
-                         self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][8], self.tasks_parameters_list[self.task_index][10]]
+                         self.player_used_spelling[-1], self.tasks_parameters_list[self.task_index][5], self.tasks_parameters_list[self.task_index][3]]
                     # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
                     self.word_maker.all_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
@@ -426,7 +426,7 @@ class GameLevel(object):
                 else:
                     self.word_maker.finished_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
-                         '未完成', self.tasks_parameters_list[self.task_index][8], self.tasks_parameters_list[self.task_index][10]]
+                         '未完成', self.tasks_parameters_list[self.task_index][5], self.tasks_parameters_list[self.task_index][3]]
                     # {单词：[音标，翻译，玩家拼写]} 这个是为了让玩家学习全部单词
                     self.word_maker.all_tasks[self.current_word] = \
                         [self.tasks_parameters_list[self.task_index][1], self.tasks_parameters_list[self.task_index][2],
@@ -470,9 +470,9 @@ class GameLevel(object):
         # 下面的代码在展示feedback的时候不运行
         self.show_Finished_Task()  # 展示玩家已经完成的任务，放在最底层
         self.gameplay_time = pygame.time.get_ticks()  # 记录游戏运行的时间
-        self.draw_Blocks(self.tasks_parameters_list[self.task_index][3],
+        self.draw_Blocks(self.tasks_parameters_list[self.task_index][6],
                          self.tasks_parameters_list[self.task_index][4])  # 将答题框画到游戏界面上
-        self.draw_progress_bar(self.tasks_parameters_list[self.task_index][5])
+        self.draw_progress_bar(self.tasks_parameters_list[self.task_index][8])
         if self.task_change:  # 如果时间改变，代表单词改变，所以要重新读取单词
             self.split_Word(self.tasks_parameters_list[self.task_index][0])  # 拆分单词
             self.task_change = False  # 关闭切换任务开关
