@@ -87,7 +87,7 @@ def remove_tasks_xls(path, wordlist):
     new_workbook.save(path)
 
 
-# 首先读取游戏的学习参数（session的标记代码）,并读取到游戏中以方便修改
+# 首先读取游戏的学习参数（session的标记代码，玩家分数）,并读取到游戏中以方便修改
 def read_excel_game_record(path):
     game_record_list = []  # create a empty list
     workbook = xlrd.open_workbook(path)  # open workbook
@@ -95,17 +95,20 @@ def read_excel_game_record(path):
     worksheet = workbook.sheet_by_name(sheets[0])  # get the first sheet
     # get the correspond content
     session_number = worksheet.cell_value(1, 0)  # （1，0）代表session number
+    player_score = worksheet.cell_value(3, 0)  # （1，0）代表session number
     game_record_list.append(session_number)  # add the record into the list
+    game_record_list.append(player_score)  # add the record into the list
     # return the record list
     return game_record_list
 
 
-# 写入游戏的学习参数（session的标记代码）,每次结束游戏都要写入，values是一个list
+# 写入游戏的学习参数（session的标记代码，玩家分数）,每次结束游戏都要写入，values是一个list
 def write_excel_game_record(path, values):
     workbook = xlrd.open_workbook(path)  # open a workbook
     new_workbook = copy(workbook)  # copy the workbook
     new_worksheet = new_workbook.get_sheet(0)  # get the first worksheet
     new_worksheet.write(1, 0, values[0])  # 第二行第一列是session number
+    new_worksheet.write(3, 0, values[1])  # 第4行第一列是玩家得分
     # 每次写文件都需要创建新文件然后覆盖原文件
     new_workbook.save(path)
 
@@ -230,7 +233,7 @@ def select_tasks(current_session_label):
             review_tasks_list.append(tasks_list[index])
     # 以上是先从复习的模式中挑选，接下来要从不会的库中挑选
     review_number = len(review_tasks_list)  # 看复习模式中有几个单词
-    learn_number = 10 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
+    learn_number = 3 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
     path = 'Word_Pool/unknown_deck.xls'  # 直接是对应的不会的单词库
     workbook = xlrd.open_workbook(path)  # 打开一个对应workbook
     sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
@@ -266,7 +269,7 @@ def select_tasks(current_session_label):
     game_level_list = []  # 初始化一个空列表
     for task in review_tasks_list:  # 循环任务
         task.append(len(task[0]))  # 先将单词长度添加进去,所有任务开始的时候任务难度都是1
-        game_difficulty = np.random.choice([1], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
+        game_difficulty = np.random.choice([4], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
         task.append(game_difficulty[0])  # 先将单词难度添加进去
         game_level_list.append(task + difficulty_level[game_difficulty[0]])  # 将每一个任务的与难度为4的参数链接
     game_level_path = 'Word_Pool/game_level_0.xls'  # 要保存文件路径

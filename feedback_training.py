@@ -1,5 +1,3 @@
-
-
 import pygame
 from datetime import datetime, timedelta
 from Common_Functions import remove_tasks_xls, write_learned_words_to_file, write_leaned_words_xls, \
@@ -18,8 +16,8 @@ class GameFeedback(object):
         # 这是feedback给所有的内容
         self.all_tasks = self.word_maker.all_tasks
         self.start_time = datetime.now()  # 玩游戏开始的时间  # 记录什么时候开始看反馈的
-        self.countdown = 30  # 初始化倒计时，用来记录已经过了多久
-        self.feedback_time = 30  # 反馈展示30秒
+        self.countdown = 2  # 初始化倒计时，用来记录已经过了多久
+        self.feedback_time = 2  # 反馈展示30秒
         self.decrease_width = self.surface_width / self.feedback_time  # 1秒减少多少宽度
         self.learned_words = []  # 用来记录玩家已经记住的单词
         self.x_increase = 250  # 横坐标的增量
@@ -38,6 +36,9 @@ class GameFeedback(object):
         for key, items in self.finished_tasks.items():
             # 条件1：如果正确拼写和玩家的拼写一样 条件2：本次任务的难度是最高难度
             if key == items[2] and str(items[3]) == '4':
+                self.word_maker.remembered_words_number += 1  # 用来记录玩家已经记住了几个单词
+                # 当前这个单词已经学完了难度是4且拼对了 要用轮数乘以2
+                self.word_maker.player_score += (4-len(self.word_maker.word_loop[key]))*2
                 self.learned_words.append(key)
             # 在这里需要记录一个变量，来记录所有的参数，用列表来记录 (单词，音标，汉语，标记)
                 word_parameters = [key, items[0], items[1], items[4]]
@@ -107,7 +108,6 @@ class GameFeedback(object):
                 self.word_maker.current_loop += 1  # 将当前的轮数加一
                 self.remove_learned_words()  # 从列表中删除已经学会的单词
                 self.word_maker.finished_tasks = {}  # 每一轮结束以后，要将这轮的记录清零，保存了{单词，[音标，汉语，玩家拼写，单词难度]}
-
                 if self.word_maker.current_loop == 5:  # 设置最大的游戏轮数 （1，2，3，4）
                     self.word_maker.word_red_color_dic = {}  # 每个session结束以后要将字典里的数据归零
                     self.word_maker.current_loop = 0  # 将当前的循环轮数设置为0
@@ -115,9 +115,12 @@ class GameFeedback(object):
                     # 每一轮结束以后都要即时更新session的参数
                     self.word_maker.learning_session_code = int(
                         self.word_maker.learning_session_code) + 1  # 每次游戏结束了游戏都代表session_code增加
-                    self.word_maker.save_game_record = [str(self.word_maker.learning_session_code)]
+                    self.word_maker.save_game_record = [str(self.word_maker.learning_session_code),
+                                                        str(self.word_maker.player_score +
+                                                            int(self.word_maker.player_old_score))]
                     write_excel_game_record('saved_files/game_record.xls',
                                             self.word_maker.save_game_record)  # 将游戏记录写入到文件中
+
                     self.word_maker.current_menu = self.word_maker.main_menu  # 重新回到主菜单，相当于本次的学习已经结束
                 else:
                     from game_level_function import GameLevel  # python无法重复导入，所以只能在使用的地方再导入

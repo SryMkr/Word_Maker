@@ -112,8 +112,8 @@ class PresentAllTasks(object):
         self.word_maker = work_maker  # 得到主游戏
         self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface
-        self.countdown_all_tasks = 30  # 展示所有单词30秒，是个变化值
-        self.countdown_time = 30  # 展示的总时间，是个固定值
+        self.countdown_all_tasks = 2  # 展示所有单词30秒，是个变化值
+        self.countdown_time = 2  # 展示的总时间，是个固定值
         self.BACKGROUND_COLOR = (200, 200, 200)  # 该界面的背景颜色
         self.start_time = datetime.now()  # 获取但是展示开始的时间
         self.decrease_width = self.surface_width / self.countdown_all_tasks  # 1秒减少多少宽度

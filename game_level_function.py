@@ -1,7 +1,6 @@
-'''
-该函数的主要功能是 实现动态化单词关卡
-奖励系统还需要继续思考，到底如何给分数，和星星不然玩的越多分数越高不合理，要结合过了最难的那一关入手
-'''
+"""
+就剩强化学习
+"""
 
 
 from Common_Functions import *
@@ -245,7 +244,13 @@ class GameLevel(object):
                     self.show_Success()  # 展示成功后得反馈
                     self.time_pause = True  # 让进度条时间暂停
                     if self.gameplay_time > self.start_check_time + 2000:  # 如果回答正确展示2秒
-                        self.word_maker.remembered_words_number += 1  # 用来记录玩家已经记住了几个单词
+                        # 如果当前难度小于等于3回答正确加1分
+                        if self.tasks_parameters_list[self.task_index][5] <= 3:
+                            self.word_maker.player_score += 1
+                        # 如果当前难度等于4回答正确加2分
+                        if self.tasks_parameters_list[self.task_index][5] == 4:
+                            self.word_maker.player_score += 2
+                        # 如果玩家在第四难度答对了且省了几轮则加轮数乘以2分
                         self.save_player_feature.append(self.task_second)  # 添加玩家用了多少时间
                         self.save_player_feature.append(self.current_attempt)  # 添加玩家用了多少次机会
                         self.save_player_feature.append(1)  # 1代表玩家对了
@@ -380,6 +385,8 @@ class GameLevel(object):
         if self.word_maker.pronunciation:
             game_Sound('UK_Pronunciation/' + self.tasks_parameters_list[self.task_index][0] + '.mp3')
             self.press_Q += 1  # 玩家主动听发音的次数
+            if self.press_Q == 3:  # 如果玩家按3次以上的发音
+                self.word_maker.player_score += 1  # 玩家的分数加1
         # 右边的线
         pygame.draw.line(self.game_level_surface, (0, 0, 0), (720, 0), (720, 743), 2)
         # 右边中间的线
@@ -454,7 +461,7 @@ class GameLevel(object):
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '任务难度:'+str(self.tasks_parameters_list[self.task_index][5])+'级'
                             , 40, 720, 50)
         # 展示当前得分
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前得分:', 40, 720, 100)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前得分:'+str(self.word_maker.player_score), 40, 720, 100)
         # 首先计算还剩多少个单词
         remaining_tasks = len(self.tasks_parameters_list) - self.task_index
         # 剩余任务数，展示本轮还剩多少单词
@@ -572,10 +579,16 @@ class GameLevel(object):
                          self.tasks_parameters_list[self.task_index][4])  # 将答题框画到游戏界面上
         self.draw_progress_bar(self.tasks_parameters_list[self.task_index][8])
         if self.task_change:  # 如果时间改变，代表单词改变，所以要重新读取单词
+            # 切换任务以前记录玩家的单词以及对应的轮数
             self.save_player_feature = []  # 将玩家的特征归0
             self.save_player_feature.append(self.tasks_parameters_list[self.task_index][0])  # 添加单词
             self.save_player_feature.append(self.tasks_parameters_list[self.task_index][4])  # 添加单词长度
             self.save_player_feature.append(self.tasks_parameters_list[self.task_index][5])  # 添加当前难度
+            if self.tasks_parameters_list[self.task_index][0] in self.word_maker.word_loop:  # 如果已经有这个单词
+                self.word_maker.word_loop[self.tasks_parameters_list[self.task_index][0]] += str(self.tasks_parameters_list[self.task_index][5])
+            else:
+                self.word_maker.word_loop[self.tasks_parameters_list[self.task_index][0]] = str(self.tasks_parameters_list[self.task_index][5])
+
             self.split_Word(self.tasks_parameters_list[self.task_index][0])  # 拆分单词
             self.task_change = False  # 关闭切换任务开关
             self.current_attempt = 0  # 将尝试的次数修改为0

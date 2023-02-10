@@ -30,6 +30,7 @@ class MainGame(object):  # main game menu
         # reshape picture
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
                                                               (self.window_width, self.window_height))
+        self.word_loop = {}  # 记录玩家某一个单词用了几轮
         self.remembered_words_number = 0  # 用来记录玩家已经记住了几个单词
         self.main_menu = MainMenu(self)  # 第一级菜单
         self.game_setting_menu = GameSetting(self)  # 实例化第二季菜单
@@ -47,8 +48,9 @@ class MainGame(object):  # main game menu
         self.check_spelling = False  # 检查拼写
         self.pronunciation = True  # speak authentic pronunciation control by player (press Q )
         self.current_loop = 1  # 用来记录当前是第几轮循环
-        self.game_record = read_excel_game_record('saved_files/game_record.xls')  # 读取游戏的一些记录,返回的是列表
-        self.learning_session_code = self.game_record[0]  # 第几次学习，初始化为-1，每次开始学习都+1
+        self.player_score = 0  # 记录玩家的得分
+        self.game_record, self.player_old_score = read_excel_game_record('saved_files/game_record.xls')  # 读取游戏的一些记录,返回的是列表
+        self.learning_session_code = self.game_record  # 第几次学习，初始化为-1，每次开始学习都+1
         self.save_game_record = []  # 点击结束游戏以后要保存一些参数
         self.word_red_color_dic = {}  # 存放单词及其对应的错误字母列表
 
@@ -158,6 +160,8 @@ class MainMenu(CreateMenu):
                                           self.word_maker.mouse_click_y - self.image_rect_2.height / 2) and \
                 self.word_maker.main_menu_chance:
             self.word_maker.remembered_words_number = 0  # 每次开始游戏都要将玩家已经记住的单词初始化为0
+            self.word_maker.player_score = 0  # 也要将玩家的得分清0
+            self.word_maker.word_loop = {}  # 记录玩家某一个单词用了几轮
             print('当前的session是', int(self.word_maker.learning_session_code))
             select_tasks(int(self.word_maker.learning_session_code))  # 挑选要玩的任务,但是有可能单词没写进去
             self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 必须先写晚间再初始化每一次点击开始游戏都要重新初始化展示单词菜单
