@@ -1,6 +1,4 @@
-'''
-最后一个任务， 往game level文件里写任务
-'''
+
 
 import pygame
 from datetime import datetime, timedelta
@@ -20,10 +18,10 @@ class GameFeedback(object):
         # 这是feedback给所有的内容
         self.all_tasks = self.word_maker.all_tasks
         self.start_time = datetime.now()  # 玩游戏开始的时间  # 记录什么时候开始看反馈的
-        self.countdown = 3  # 初始化倒计时，用来记录已经过了多久
-        self.feedback_time = 3  # 反馈展示60秒
+        self.countdown = 2  # 初始化倒计时，用来记录已经过了多久
+        self.feedback_time = 2  # 反馈展示30秒
         self.decrease_width = self.surface_width / self.feedback_time  # 1秒减少多少宽度
-        self.learned_words = [] # 用来记录玩家已经记住的单词
+        self.learned_words = []  # 用来记录玩家已经记住的单词
         self.x_increase = 250  # 横坐标的增量
         self.y_increase = 50  # 纵坐标的增量
 
@@ -44,20 +42,20 @@ class GameFeedback(object):
             # 在这里需要记录一个变量，来记录所有的参数，用列表来记录 (单词，音标，汉语，标记)
                 word_parameters = [key, items[0], items[1], items[4]]
             # 并且将这个单词移动到与session对应的单词库 在这里输入的参数是当前的session和word_parameter
-                labels, tasks = write_learned_words_to_file(word_parameters, str(self.word_maker.learning_session_code))
-                print(labels, tasks)
+                labels, tasks = write_learned_words_to_file(word_parameters, int(self.word_maker.learning_session_code))
                 write_leaned_words_xls(labels, tasks)  # 执行写入操作
         # 将已经记住的单词移除单词库
         remove_tasks_xls('Word_Pool/game_level_0.xls', self.learned_words)
         # 重新组合剩余的单词和对应的难度，供下一轮使用，也就是要重写任务单词的库
-        reconstruct_tasks_and_difficulty()
+        # reconstruct_tasks_and_difficulty()
+        reconstruct_tasks_and_difficulty(self.word_maker.current_loop)
 
     # 展示玩家的拼写记录
     def finished_Tasks(self):
         x_coordinate = 0  # 初始横坐标
         y_coordinate = 100  # 初始纵坐标
         # 先展示一句话
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '你有60秒时间查看反馈', 40, 300, 0)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '你有30秒时间查看反馈', 40, 300, 0)
         # 在展示每一列的列标题
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '单词', 40, 0, 50)
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '音标', 40, 250, 50)
@@ -106,12 +104,17 @@ class GameFeedback(object):
             self.countdown -= 1
             if self.countdown == -1:  # 如果时间结束，则进入游戏界面
                 # 在这里要完成删除已经完成的任务，但是feedback还是展示所有的单词
+                self.word_maker.current_loop += 1  # 将当前的轮数加一
                 self.remove_learned_words()  # 从列表中删除已经学会的单词
                 self.word_maker.finished_tasks = {}  # 每一轮结束以后，要将这轮的记录清零，保存了{单词，[音标，汉语，玩家拼写，单词难度]}
-                self.word_maker.current_loop += 1  # 将当前的轮数加一
-                if self.word_maker.current_loop == 3:  # 如果已经超出了轮数
+
+                if self.word_maker.current_loop == 5:  # 设置最大的游戏轮数 （1，2，3，4）
+                    self.word_maker.word_red_color_dic = {}  # 每个session结束以后要将字典里的数据归零
+                    self.word_maker.current_loop = 0  # 将当前的循环轮数设置为0
                     self.word_maker.all_tasks = {}  # 每次所有的单词学习结束，都要将里面的内容清空，因为会读取新的单词
                     # 每一轮结束以后都要即时更新session的参数
+                    self.word_maker.learning_session_code = int(
+                        self.word_maker.learning_session_code) + 1  # 每次游戏结束了游戏都代表session_code增加
                     self.word_maker.save_game_record = [str(self.word_maker.learning_session_code)]
                     write_excel_game_record('saved_files/game_record.xls',
                                             self.word_maker.save_game_record)  # 将游戏记录写入到文件中

@@ -1,33 +1,33 @@
-
-from pronunciation_test import PronunciationTest, IndividualWord  # 导入发音的包
+# import necessary packages
+from pronunciation_test import PronunciationTest, IndividualWord  # import speaking recognition
 from main_game_function import *
 from feedback_training import *
-from Common_Functions import read_excel_game_record, write_excel_game_record, select_tasks
+from Common_Functions import read_excel_game_record, select_tasks
 
 
-class MainGame(object):  # 控制全局的参数
-    def __init__(self, window_width, window_height):  # 输入游戏屏幕的长度和宽度
-        pygame.init()  # 初始化游戏里面的一些模块（包括字体，音乐等六种）
-        self.window_width = window_width  # 游戏窗口的宽度
-        self.window_height = window_height  # 游戏窗口的高度
-        self.window = pygame.display.set_mode((self.window_width, self.window_height))  # 初始化游戏窗口
-        pygame.display.set_caption('Word Maker')  # 设置游戏的标题
-        self.GAME_BACKGROUND_PICTURE = pygame.image.load("Game_Pictures/Main_Game_Background_1.png")  # 游戏的背景图片
-        self.gameplay_time = pygame.time.get_ticks()  # 记录游戏运行的时间(milliseconds)
-        self.Main_Game_Running = True  # 控制主游戏的运行
-        self.Menu_Font = "Game_Fonts/chinese_pixel_font.TTF"  # 菜单的字体
-        self.WHITE = (255, 255, 255)  # 设置一个白色
-        self.BGC = (200, 200, 200)  # 设置游戏的背景颜色
-        self.mouse_current_x = 0  # 鼠标当前的位置
-        self.mouse_current_y = 0  # 鼠标当前的位置
-        self.mouse_click_x = 0  # 鼠标点击的位置
-        self.mouse_click_y = 0  # 鼠标点击的位置
-        self.mouse_rel_x = 0  # 鼠标移动的相对位置
-        self.mouse_rel_y = 0  # 鼠标移动的相对位置
-        self.finished_tasks = {}  # 初始化玩家的拼写记录
-        self.all_tasks = {}  # 用来记录玩家本次学习的所有记录，满足学习所有，测试不会的功能
+class MainGame(object):  # main game menu
+    def __init__(self, window_width, window_height):  # input the width and height of display surface
+        pygame.init()  # initialize six modules（including music and fonts）
+        self.window_width = window_width  # the width of display surface
+        self.window_height = window_height  # the height of display surface
+        self.window = pygame.display.set_mode((self.window_width, self.window_height))  # initialize game display
+        # background picture
+        self.GAME_BACKGROUND_PICTURE = pygame.image.load("Game_Pictures/Main_Game_Background_1.png")
+        self.gameplay_time = pygame.time.get_ticks()  # record running time (milliseconds)
+        self.Main_Game_Running = True  # control the running of game
+        self.Menu_Font = "Game_Fonts/chinese_pixel_font.TTF"  # Menu Font
+        self.WHITE = (255, 255, 255)  # white
+        self.BGC = (200, 200, 200)  # grey
+        self.mouse_current_x = 0  # the current x_axis of mouse
+        self.mouse_current_y = 0  # the current y_axis of mouse
+        self.mouse_click_x = 0  # the click x_axis of mouse
+        self.mouse_click_y = 0  # the click y_axis of mouse
+        self.mouse_rel_x = 0  # the x coordinate relative distance x_axis of mouse
+        self.mouse_rel_y = 0  # the y coordinate relative distance x_axis of mouse
+        self.finished_tasks = {}  # record finished tasks in the session (will be moved)
+        self.all_tasks = {}  # record all task (feedback)
         self.pronunciation_current_word_index = 0  # 记录发音记忆中，是第几个单词
-        # 有时候图片太大，需要调整图片大小符合目标屏幕大小
+        # reshape picture
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
                                                               (self.window_width, self.window_height))
 
@@ -38,17 +38,19 @@ class MainGame(object):  # 控制全局的参数
         self.feedback_train_menu = GameFeedback(self)  # 实例化反馈菜单
         self.pronunciation_menu_chance = False  # 用于转换单词
         self.main_menu_chance = False  # 用来控制主菜单响应
+        self.pronunciation_menu_chance = False  # change task in pronunciation test
         self.game_setting_menu_chance = False  # 用来控制主菜单响应
         self.present_word_menu_chance = False  # 控制展示单词菜单
-        self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
         self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
         self.current_menu = self.main_menu  # 定义变量指向当前的菜单
         self.click_event = False  # 判断当前鼠标点击没有
         self.check_spelling = False  # 检查拼写
-        self.current_loop = 0  # 用来记录当前是第几轮循环
+        self.pronunciation = True  # speak authentic pronunciation control by player (press Q )
+        self.current_loop = 1  # 用来记录当前是第几轮循环
         self.game_record = read_excel_game_record('saved_files/game_record.xls')  # 读取游戏的一些记录,返回的是列表
         self.learning_session_code = self.game_record[0]  # 第几次学习，初始化为-1，每次开始学习都+1
         self.save_game_record = []  # 点击结束游戏以后要保存一些参数
+        self.word_red_color_dic = {}  # 存放单词及其对应的错误字母列表
 
     # 检查事件，鼠标事件
     def check_Events(self):
@@ -58,15 +60,14 @@ class MainGame(object):  # 控制全局的参数
             if event.type == pygame.MOUSEMOTION:  # 鼠标移动
                 self.mouse_current_x, self.mouse_current_y = event.pos  # 获得当前鼠标的坐标
                 self.mouse_rel_x, self.mouse_rel_y = event.rel  # 获得鼠标移动的相对距离
-
             if event.type == pygame.MOUSEBUTTONUP:  # 点击了鼠标
                 self.click_event = False  # # 释放了鼠标
                 self.mouse_click_x, self.mouse_click_y = event.pos
                 self.pronunciation_menu_chance = True  # 用来控制语音检测模块的所有参数
+                self.pronunciation_menu_chance = True  # 用来控制语音检测模块的所有参数
                 self.main_menu_chance = True  # 主菜单的相应
                 self.game_setting_menu_chance = True  # 游戏设置的响应
                 self.present_word_menu_chance = True  # 控制展示单词菜单
-                self.present_all_word_menu_chance = True  # 控制展示所有单词按钮
                 self.game_level_menu_chance = True  # 控制游戏界面的鼠标响应
             if event.type == pygame.MOUSEBUTTONDOWN:  # 点击了鼠标
                 self.click_event = True  # 鼠标点击了左键，代表选中了字母
@@ -76,24 +77,23 @@ class MainGame(object):  # 控制全局的参数
                 if event.key == pygame.K_q:  # 开始单词发音
                     self.pronunciation = True
 
-    # 因为点击事件会一直相应，所以需要设置一个开关，一次点击只响应一次
+    # keys will not reset if not reset the key and use KEYUP cannot timely reset keys
     def reset_Keys(self):
-        self.pronunciation_menu_chance = False
-        self.main_menu_chance = False  # 主菜单的响应
-        self.game_setting_menu_chance = False  # 游戏设置响应
-        self.present_word_menu_chance = False  # 控制展示单词菜单
-        self.present_all_word_menu_chance = False  # 控制展示所有单词按钮
-        self.game_level_menu_chance = False  # 控制游戏界面的鼠标响应
-        self.pronunciation = False
-        self.check_spelling = False
+        self.pronunciation_menu_chance = False  # in pronunciation test menu
+        self.pronunciation_menu_chance = False  # release the Q keyboard
+        self.main_menu_chance = False  # separate main menu from other menus
+        self.game_setting_menu_chance = False  # separate game setting menu from other menus
+        self.present_word_menu_chance = False  # separate present word menu from other menus
+        self.game_level_menu_chance = False  # separate game level menu from other menus
+        self.pronunciation = False  # reset pronunciation
+        self.check_spelling = False  # reset check spelling
 
-    # 保证游戏可以正常运行
+    # constantly running code
     def game_Loop(self):
-        if self.Main_Game_Running:
-            self.clock = pygame.time.Clock()
-            self.clock.tick(80)
-            self.window.blit(self.GAME_BACKGROUND_PICTURE, (0, 0))  # 每次都刷新屏幕
-            self.check_Events()  # 获取游戏的事件
+            self.clock = pygame.time.Clock()  # set a clock
+            self.clock.tick(60)  # 60 frame per minutes
+            self.window.blit(self.GAME_BACKGROUND_PICTURE, (0, 0))  # draw the background to display surface
+            self.check_Events()  # check game events
 
 
 # 菜单的父类
@@ -157,11 +157,10 @@ class MainMenu(CreateMenu):
         if self.image_rect_1.collidepoint(self.word_maker.mouse_click_x - self.image_rect_2.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_2.height / 2) and \
                 self.word_maker.main_menu_chance:
-            self.word_maker.learning_session_code = int(self.word_maker.learning_session_code) + 1  # 每次点加开始游戏都代表session_code增加
-            select_tasks(self.word_maker.learning_session_code)  # 挑选要玩的任务,但是有可能单词没写进去
-            print(self.word_maker.learning_session_code)
+            print('当前的session是', int(self.word_maker.learning_session_code))
+            select_tasks(int(self.word_maker.learning_session_code))  # 挑选要玩的任务,但是有可能单词没写进去
             self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 必须先写晚间再初始化每一次点击开始游戏都要重新初始化展示单词菜单
-            self.word_maker.current_loop = 0  # 每次点击开始打游戏都要将轮数初始化
+            self.word_maker.current_loop = 1  # 每次点击开始打游戏都要将轮数初始化
             if str(self.word_maker.learning_session_code) == '10':  # 如果learning session 到了10 要重新从0开始计数
                 self.word_maker.learning_session_code = 0
             self.word_maker.current_menu = self.word_maker.present_word_menu  # # 如果鼠标点击的这个位置在方块2中，进入下一级菜单

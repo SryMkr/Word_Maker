@@ -1,14 +1,9 @@
-'''
-问题：两个文件都没有重写文件
-
-'''
-
-
 import xlrd, xlwt  # 操作excel表格
 from numpy import random  # 导入随即包
 import pygame
 from xlutils.copy import copy
 import numpy as np
+import itertools
 
 
 # 获得词库中的所有单词，音标和翻译
@@ -117,7 +112,7 @@ def write_excel_game_record(path, values):
 
 # 将已经记住的单词添加到对应的表单中,第一个参数到底是哪个文件,第二个参数写入 英文，音标，汉语，单词的label，逐个单词输入
 def write_leaned_words_xls(session_label, word_parameters):
-    path = 'Word_Pool/session_' + str(session_label) + '.xls' # 说先确定path是什么，应该写入到哪个文件
+    path = 'Word_Pool/session_' + str(session_label) + '.xls'  # 说先确定path是什么，应该写入到哪个文件
     workbook = xlrd.open_workbook(path)  # 打开这个文件
     sheets = workbook.sheet_names()  # get all sheet names
     worksheet = workbook.sheet_by_name(sheets[0])  # get the first sheet
@@ -133,7 +128,7 @@ def write_leaned_words_xls(session_label, word_parameters):
     else:  # 如果已经在单词库中，找到对应的那行索引，然后修改
         # 取得这个单词在原单词表中的索引
         word_index = words.index(word_parameters[0])
-        # 第三列是标记
+        # 第三列是标记,文件标记
         new_worksheet.write(word_index, 3, word_parameters[3])
     # save file
     new_workbook.save(path)
@@ -152,12 +147,13 @@ def write_learned_words_to_file(learned_tasks, current_session_label):
     if learned_tasks[3] == 'new':
        # 接下来要找到底是哪个文件
         for file_label in file_label_list:
-            if current_session_label == str(file_label[0]):  # 如果当前这个session和文件名的第一个相等
+            if current_session_label == int(file_label[0]):  # 如果当前这个session和文件名的第一个相等
+                print('第二步')
                 session_label = file_label  # 就把当前的这个文件民给session label
                 learned_tasks[3] = file_label + '_' + file_label[0]
         # 并将不会的从不会的库里的单词删除
         remove_task_from_original('Word_Pool/unknown_deck.xls', learned_tasks[0])
-    elif str(final_number) == str(current_session_label):  # 也就是说已经复习过三次了
+    elif int(final_number) == current_session_label:  # 也就是说已经复习过三次了
         session_label = 'retired'  # 直接移动到淘汰库，保存learned task里面的所有数据
         remove_task_from_original('Word_Pool/session_' + final_label_split[0] + '.xls', learned_tasks[0])
         # 并将已经学会的单词从那个session删除
@@ -200,6 +196,90 @@ def remove_task_from_original(path, remembered_word):
     new_workbook.save(path)
 
 
+#  首先往current_deck里面写单词 以及往game_level里面写单词, spaced repetition
+def select_tasks(current_session_label):
+    # 定义一个所有文件的文件label,因为要找到所有对应的文件
+    file_label_list = ['0259', '1360', '2471', '3582', '4693', '5704', '6815', '7962', '8037', '9148']
+    tasks_list = []  # 存放所有的任务单词
+    review_tasks_list = []  # 存放review得单词
+    print(str(current_session_label))
+    for file_label in file_label_list:  # 遍历列表
+
+        if str(current_session_label) in file_label:  # 这里确认从哪个文件中挑选单词
+            path = 'Word_Pool/session_' + file_label + '.xls'  # 直接组成对应path
+            workbook = xlrd.open_workbook(path)  # 打开一个对应workbook
+            sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
+            worksheet = workbook.sheet_by_name(sheets[0])  # 得到工作簿的第一页
+            nrows = worksheet.nrows  # 获取该表总行数 （单词，音标，翻译，label）
+            if nrows != 0:  # 如果这个文件中有单词，每一个都要判断，得到所有符合条件的单词
+                for i in range(nrows):  # 循环每一行的单词
+                    label_value = worksheet.row_values(i)[3]  # 这一行的第三列代表的是label
+                    label_value_first, label_value_second = label_value.split('_')
+                    label_value_index = label_value_first.find(label_value_second)  # 当前的这个单词的label在file label中的索引
+                    current_session_index = label_value_first.find(str(current_session_label))
+                    if label_value_index <= current_session_index:  # 当前的单词得是之前得session学过的才添加进去
+                        tasks_list.append(worksheet.row_values(i))  # 将该行所有元素添加到列表中
+    # 在复习模式里面还是得先挑三个单词，万一不够三个也是全部提取
+    b = [i for i in range(len(tasks_list))]  # 将行数弄成一个列表
+    if len(tasks_list) > 3:
+        index_review_list = np.random.choice(b, 3, replace=False)  # 不重复抽验
+        for index in index_review_list:
+            review_tasks_list.append(tasks_list[index])
+    else:
+        for index in b:
+            review_tasks_list.append(tasks_list[index])
+    # 以上是先从复习的模式中挑选，接下来要从不会的库中挑选
+    review_number = len(review_tasks_list)  # 看复习模式中有几个单词
+    learn_number = 3 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
+    path = 'Word_Pool/unknown_deck.xls'  # 直接是对应的不会的单词库
+    workbook = xlrd.open_workbook(path)  # 打开一个对应workbook
+    sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
+    worksheet = workbook.sheet_by_name(sheets[0])  # 得到工作簿的第一页
+    nrows = worksheet.nrows  # 获取该表总行数
+    # 万一学习库中的单词不够数量，就全部提取
+    if 0 < nrows < learn_number:
+        for i in range(nrows):
+            review_tasks_list.append(worksheet.row_values(i))
+    else:  # 如果数量充足
+        b = [i for i in range(nrows)]  # 将行数弄成一个列表
+        index_list = np.random.choice(b, learn_number, replace=False)  # 不重复抽验
+        for index in index_list:
+            # review_tasks_list.append(worksheet.row_values(index))
+            review_tasks_list.append(worksheet.row_values(index, start_colx=0, end_colx=4))
+    # 将tasks_list文件中的内容存入到current_deck中
+    path = 'Word_Pool/Current_Deck.xls'  # 要保存文件路径
+    # 创建一个空的表格
+    new_workbook = xlwt.Workbook()
+    # 创建一个空的表单
+    new_worksheet = new_workbook.add_sheet('sheet1')
+    # new_worksheet = new_workbook.get_sheet(0)  # get the first worksheet
+    word_index = 0
+    for task in review_tasks_list:
+        new_worksheet.write(word_index, 0, task[0])
+        new_worksheet.write(word_index, 1, task[1])
+        new_worksheet.write(word_index, 2, task[2])
+        word_index += 1
+        # save file
+    new_workbook.save(path)
+    # 将tasks_list文件中的内容存入到game_level里面写任务
+    difficulty_level = convert_difficulty_to_dic()  # 读取难度参数 本次先将全部的难度设置为4
+    game_level_list = []  # 初始化一个空列表
+    for task in review_tasks_list:  # 循环任务
+        task.append(len(task[0]))  # 先将单词长度添加进去,所有任务开始的时候任务难度都是1
+        game_difficulty = np.random.choice([4], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
+        task.append(game_difficulty[0])  # 先将单词难度添加进去
+        game_level_list.append(task + difficulty_level[game_difficulty[0]])  # 将每一个任务的与难度为4的参数链接
+    game_level_path = 'Word_Pool/game_level_0.xls'  # 要保存文件路径
+    game_level_new_workbook = xlwt.Workbook()  # copy the workbook
+    game_level_game_level_new_worksheet = game_level_new_workbook.add_sheet('sheet1')  # get the first worksheet
+    for row_index in range(len(game_level_list)):  # 总共有多少单词数
+        for i in range(len(game_level_list[0])):
+            game_level_game_level_new_worksheet.write(row_index, i, str(game_level_list[row_index][i]))  # 单词
+            # save file
+    game_level_new_workbook.save(game_level_path)
+
+
+'''
 #  首先往current_deck里面写单词 以及往game_level里面写单词
 def select_tasks(current_session_label):
     # 定义一个所有文件的文件label,因为要找到所有对应的文件
@@ -232,21 +312,52 @@ def select_tasks(current_session_label):
             review_tasks_list.append(tasks_list[index])
     # 以上是先从复习的模式中挑选，接下来要从不会的库中挑选
     review_number = len(review_tasks_list)  # 看复习模式中有几个单词
-    learn_number = 3 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
+    learn_number = 10 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
     path = 'Word_Pool/unknown_deck.xls'  # 直接是对应的不会的单词库
     workbook = xlrd.open_workbook(path)  # 打开一个对应workbook
     sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
     worksheet = workbook.sheet_by_name(sheets[0])  # 得到工作簿的第一页
     nrows = worksheet.nrows  # 获取该表总行数
+    # 得到总行数以后，要找到对应长度的单词的索引
+    three_length = []
+    four_length = []
+    five_length = []
+    six_length = []
+    seven_length = []
+    eight_length = []
+    # 将所有的索引加入到对应的框中
+    for i in range(nrows):
+        a = worksheet.row_values(i) # 得到这一行所有的信息
+        if a[4] == 3:
+            three_length.append(i)
+        elif a[4] == 4:
+            four_length.append(i)
+        elif a[4] == 5:
+            five_length.append(i)
+        elif a[4] == 6:
+            six_length.append(i)
+        elif a[4] == 7:
+            seven_length.append(i)
+        elif a[4] == 8:
+            eight_length.append(i)
+    # 再每个框中随机抽烟
+    three_list = np.random.choice(three_length, 1, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    four_list = np.random.choice(four_length, 2, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    five_list = np.random.choice(five_length, 2, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    six_list = np.random.choice(six_length, 2, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    seven_list = np.random.choice(seven_length, 2, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    eight_list = np.random.choice(eight_length, 1, replace=False)  # 不重复抽验,在6组长度抽出对应的索引
+    # 将以上的列表转化为一维列表
+    b = [three_list,four_list,five_list,six_list,seven_list,eight_list]
+    b = list(itertools.chain.from_iterable(b))
     # 万一学习库中的单词不够数量，就全部提取
     if 0 < nrows < learn_number:
         for i in range(nrows):
             review_tasks_list.append(worksheet.row_values(i))
     else:  # 如果数量充足
-        b = [i for i in range(nrows)]  # 将行数弄成一个列表
-        index_list = np.random.choice(b, learn_number, replace=False)  # 不重复抽验
-        for index in index_list:
-            review_tasks_list.append(worksheet.row_values(index))
+        for index in b:
+            review_tasks_list.append(worksheet.row_values(index,start_colx=0,end_colx=4))
+
     # 将tasks_list文件中的内容存入到current_deck中
     path = 'Word_Pool/Current_Deck.xls'  # 要保存文件路径
     # 创建一个空的表格
@@ -266,8 +377,8 @@ def select_tasks(current_session_label):
     difficulty_level = convert_difficulty_to_dic()  # 读取难度参数 本次先将全部的难度设置为4
     game_level_list = []  # 初始化一个空列表
     for task in review_tasks_list:  # 循环任务
-        task.append(len(task[0]))  # 先将单词长度添加进去
-        game_difficulty = np.random.choice([1, 2, 3, 4], 1)  # 不重复抽验,但是所有难度的初始化都应该是最简单的难度
+        task.append(len(task[0]))  # 先将单词长度添加进去,所有任务开始的时候任务难度都是1
+        game_difficulty = np.random.choice([1], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
         task.append(game_difficulty[0])  # 先将单词难度添加进去
         game_level_list.append(task + difficulty_level[game_difficulty[0]])  # 将每一个任务的与难度为4的参数链接
     game_level_path = 'Word_Pool/game_level_0.xls'  # 要保存文件路径
@@ -277,9 +388,8 @@ def select_tasks(current_session_label):
         for i in range(len(game_level_list[0])):
             game_level_game_level_new_worksheet.write(row_index, i, str(game_level_list[row_index][i]))  # 单词
             # save file
-    print(game_level_list)
     game_level_new_workbook.save(game_level_path)
-
+'''
 
 # 该函数的作用是将难度关卡里的数据保存为字典，以便和单词的其他元素组合
 def convert_difficulty_to_dic():
@@ -295,8 +405,8 @@ def convert_difficulty_to_dic():
     return difficulty_dic
 
 
-# reconstruct tasks and difficulty
-def reconstruct_tasks_and_difficulty():
+# reconstruct tasks and difficulty 现在先设置为固定，以便展示游戏
+def reconstruct_tasks_and_difficulty(current_loop):
     game_level_path = 'Word_Pool/game_level_0.xls'  # 要修改的文件路径
     tasks_list = []  # 创建一个空列表，存储所有的参数
     game_level_workbook = xlrd.open_workbook(game_level_path)  # 打开一个对应workbook
@@ -310,13 +420,33 @@ def reconstruct_tasks_and_difficulty():
     for i in range(nrows):
         row_value = worksheet.row_values(i)  # 读取该行的所有数据
     # 将tasks_list文件中的内容存入到game_level里面写任务
-        game_difficulty = np.random.choice([1, 2, 3, 4], 1)  # 不重复抽验,返回的是列表形式
-        row_value[5] = str(game_difficulty[0])  # 第五列是单词难度
+    #     game_difficulty = np.random.choice([1, 2, 3, 4], 1)  # 不重复抽验,返回的是列表形式
+    #     row_value[5] = str(game_difficulty[0])  # 第五列是单词难度
+        row_value[5] = str(current_loop)  # 第五列是单词难度
         # 将每一个任务的与难度为4的参数链接 (难度以前的参数不需要修改，难度参数)
-        tasks_list.append(row_value[:6] + difficulty_level[game_difficulty[0]])
+        # tasks_list.append(row_value[:6] + difficulty_level[game_difficulty[0]])
+        if current_loop == 5:
+            current_loop = 1
+        tasks_list.append(row_value[:6] + difficulty_level[current_loop])
     for row_index in range(len(tasks_list)):  # 总共有多少单词数
         for i in range(len(tasks_list[0])):
             new_worksheet.write(row_index, i, str(tasks_list[row_index][i]))  # 单词
             # save file
     new_workbook.save(game_level_path)
 
+
+def write_player_features_xls(player_features):
+    path = 'saved_files/player_features.xls'  # 特征写入的文件
+    workbook = xlrd.open_workbook(path)  # 打开这个文件
+    sheets = workbook.sheet_names()  # get all sheet names
+    worksheet = workbook.sheet_by_name(sheets[0])  # get the first sheet
+    rows_old = worksheet.nrows  # get the rows of sheet # 这个值就是紧接着的那个空位
+    new_workbook = copy(workbook)  # copy the workbook
+    new_worksheet = new_workbook.get_sheet(0)  # get the first worksheet
+    # 循环写入文件
+    for player_feature in player_features:
+        for i in range(len(player_feature)):
+            new_worksheet.write(rows_old, i, str(player_feature[i]))  # 顺序写入文件
+        rows_old += 1  # 将行的索引加1
+    # save file
+    new_workbook.save(path)
