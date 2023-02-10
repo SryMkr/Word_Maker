@@ -1,11 +1,11 @@
 # 需要等待电脑的麦克风打开
-
 # 导入所需要的包
 import pyaudio
 import threading
 import wave
 from Common_Functions import *  # 导入函数
 from YouDao_API import connect  # 发送打分请求
+import os
 
 
 # 语音学习的功能模块
@@ -104,7 +104,6 @@ class PronunciationTest(object):
         if return_main_menu.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
             self.word_maker.current_menu = self.word_maker.main_menu  # 返回主菜单
-
         self.word_maker.window.blit(self.pronunciation_surface, (0, 0))  # 将发音学习画到主游戏上
 
 
@@ -115,6 +114,8 @@ class IndividualWord(PronunciationTest):
         self.player_pronunciation = AudioModel(False)  # 实例化录音功能
         self.show_results = False  # 目前不展示发音结果
         self.word_properties = ['音素', '得分', '对错']
+        self.player_audio_path = 'Player_Pronunciation'
+        self.rerecord = False  # 重新录音展示
 
     # 学习单独的一个单词
     def display_menu(self):
@@ -145,6 +146,7 @@ class IndividualWord(PronunciationTest):
         # 如果点击了官方发音按钮，则发音
         if official_pronunciation_rect.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
+            game_Sound('game_sound/mouse_click_1.mp3')
             game_Sound('UK_Pronunciation/' + self.words[self.word_maker.pronunciation_current_word_index] + '.mp3')
 
         # 开始录音
@@ -158,6 +160,7 @@ class IndividualWord(PronunciationTest):
         #  如果点击了开始录音按钮，则开始录音
         if begin_pronunciation_rect.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
+            game_Sound('game_sound/start.wav')
             self.player_pronunciation.is_recording = True  # 则开始录音
             # 并且输入当前的单词
             self.player_pronunciation.record_and_save(self.words[self.word_maker.pronunciation_current_word_index])
@@ -173,6 +176,7 @@ class IndividualWord(PronunciationTest):
         #  如果点击结束录音按钮，则结束录音
         if end_pronunciation_rect.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
+            game_Sound('game_sound/end.wav')
             self.player_pronunciation.is_recording = False  # 则结束录音
 
         # 录音结果
@@ -183,14 +187,22 @@ class IndividualWord(PronunciationTest):
                                                   self.word_maker.mouse_current_y):
             self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '录音结果', 50, self.surface_width / 2 + 200,
                                 self.surface_height / 8 + 180, (255, 255, 255))
-        # 如果选中播放玩家的录音
+        # 如果选中录音结果
         if result_pronunciation_rect.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
-            game_Sound('Player_Pronunciation/' + self.words[self.word_maker.pronunciation_current_word_index] + '.wav')
-            self.player_score = self.player_pronunciation.get_score(
-                self.words[self.word_maker.pronunciation_current_word_index])
-            self.show_results = True
-
+            game_Sound('game_sound/mouse_click_1.mp3')
+            # 在这需要判断音频的长短来决定是否发送请求
+            if os.path.exists(os.path.join(self.player_audio_path,
+                                           (self.words[self.word_maker.pronunciation_current_word_index] + '.wav'))):
+                game_Sound(
+                    'Player_Pronunciation/' + self.words[self.word_maker.pronunciation_current_word_index] + '.wav')
+                self.player_score = self.player_pronunciation.get_score(
+                    self.words[self.word_maker.pronunciation_current_word_index])
+                # 切换了单词不再展示结果
+                self.show_results = True
+                self.rerecord = False
+            else:
+                self.rerecord = True
         # 展示结果
         if self.show_results:
             self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", str(self.player_score[0]), 80,
@@ -212,6 +224,11 @@ class IndividualWord(PronunciationTest):
                                                 str(self.player_score[phoneme_index][index]), 30,
                                                 self.surface_width / 2 + index * 200,
                                                 (self.surface_height / 2 - 30) + phoneme_index * 35)
+
+        # 让玩家重新录音
+        if self.rerecord:
+            self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '录音太短,请重新录音', 40,
+                                self.surface_width / 2 + 200, self.surface_height / 2 - 30)
         # 返回目录的按钮
         text_rect_return = self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '返回目录', 50, self.surface_width / 2,
                                                self.surface_height - 50)  # 创建一个返回的按钮功能，放到左下角的位置
@@ -223,7 +240,8 @@ class IndividualWord(PronunciationTest):
         if text_rect_return.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
             self.word_maker.current_menu = self.word_maker.pronunciation_menu  # 显示单词目录
-
+            self.show_results = False  # 不再展示结果
+            self.rerecord = False
         # 创建一个继续的按钮功能，放到右下角的位置
         text_rect_continue = self.draw_Menu_Text("Game_Fonts/symbol_signs.otf", 'R', 80, self.surface_width - 80,
                                                  self.surface_height - 50)
@@ -235,7 +253,11 @@ class IndividualWord(PronunciationTest):
         if text_rect_continue.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
             self.word_maker.pronunciation_current_word_index += 1  # 显示下一个单词
+            # 如果下一个单词超过了已有的单词数，则到第一个
+            if self.word_maker.pronunciation_current_word_index == len(self.words):
+                self.word_maker.pronunciation_current_word_index = 0  # 则回到第一个单词
             self.show_results = False  # 不再展示结果
+            self.rerecord = False
         # 创建一个上一个的按钮功能，放到左下角下角的位置
         text_rect_previous = self.draw_Menu_Text("Game_Fonts/symbol_signs.otf", 'L', 80,
                                                  80, self.surface_height - 50)
@@ -247,7 +269,11 @@ class IndividualWord(PronunciationTest):
         if text_rect_previous.collidepoint(self.word_maker.mouse_click_x, self.word_maker.mouse_click_y) and \
                 self.word_maker.pronunciation_menu_chance:
             self.word_maker.pronunciation_current_word_index -= 1  # 显示下一个单词
+            # 如果到了第一个单词
+            if self.word_maker.pronunciation_current_word_index == -1:
+                self.word_maker.pronunciation_current_word_index = (len(self.words) - 1)  # 则到最后一个单词
             self.show_results = False  # 不再展示结果
+            self.rerecord = False
         self.word_maker.window.blit(self.pronunciation_surface, (0, 0))  # 将这个屏幕画到主游戏上
 
 
