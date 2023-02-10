@@ -230,7 +230,7 @@ def select_tasks(current_session_label):
             review_tasks_list.append(tasks_list[index])
     # 以上是先从复习的模式中挑选，接下来要从不会的库中挑选
     review_number = len(review_tasks_list)  # 看复习模式中有几个单词
-    learn_number = 3 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
+    learn_number = 10 - review_number  # 每次学习10个单词，减去复习模式，就是新学习的单词数量
     path = 'Word_Pool/unknown_deck.xls'  # 直接是对应的不会的单词库
     workbook = xlrd.open_workbook(path)  # 打开一个对应workbook
     sheets = workbook.sheet_names()  # 获得工作簿中的所有名字
@@ -266,7 +266,7 @@ def select_tasks(current_session_label):
     game_level_list = []  # 初始化一个空列表
     for task in review_tasks_list:  # 循环任务
         task.append(len(task[0]))  # 先将单词长度添加进去,所有任务开始的时候任务难度都是1
-        game_difficulty = np.random.choice([4], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
+        game_difficulty = np.random.choice([1], 1)  # 不重复抽验,游戏初始化的时候关卡难度都是1
         task.append(game_difficulty[0])  # 先将单词难度添加进去
         game_level_list.append(task + difficulty_level[game_difficulty[0]])  # 将每一个任务的与难度为4的参数链接
     game_level_path = 'Word_Pool/game_level_0.xls'  # 要保存文件路径
@@ -390,6 +390,7 @@ def select_tasks(current_session_label):
             # save file
     game_level_new_workbook.save(game_level_path)
 '''
+
 
 # 该函数的作用是将难度关卡里的数据保存为字典，以便和单词的其他元素组合
 def convert_difficulty_to_dic():

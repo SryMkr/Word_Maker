@@ -1,4 +1,4 @@
-# 需要等待电脑的麦克风打开
+# 需要听到语音提示才开始录音
 # 导入所需要的包
 import pyaudio
 import threading
@@ -162,7 +162,7 @@ class IndividualWord(PronunciationTest):
                 self.word_maker.pronunciation_menu_chance:
             game_Sound('game_sound/start.wav')
             self.player_pronunciation.is_recording = True  # 则开始录音
-            # 并且输入当前的单词
+            # 保存当前的发音
             self.player_pronunciation.record_and_save(self.words[self.word_maker.pronunciation_current_word_index])
 
         # 结束录音
@@ -203,28 +203,30 @@ class IndividualWord(PronunciationTest):
                 self.rerecord = False
             else:
                 self.rerecord = True
-        # 展示结果
+        # 展示结果 和 结果不为空
         if self.show_results:
-            self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", str(self.player_score[0]), 80,
-                                self.surface_width / 2 + 400, self.surface_height / 8 + 180)  # 单词得分
-            for property_index in range(len(self.word_properties)):
-                # 先显示三列的指标命名
-                self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", self.word_properties[property_index], 40,
-                                    self.surface_width / 2 + property_index * 200, self.surface_height / 2 - 30)
-                #  顺序展示音素的结果
-                for phoneme_index in range(1, len(self.player_score)):
-                    for index in range(len(self.player_score[phoneme_index])):
-                        if index == 0:  # 如果是音素用一个字体
-                            self.draw_Menu_Text("Game_Fonts/phonetic.ttf", str(self.player_score[phoneme_index][index]),
-                                                30,
-                                                self.surface_width / 2 + index * 200,
-                                                (self.surface_height / 2 - 30) + phoneme_index * 35)
-                        else:
-                            self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF",
-                                                str(self.player_score[phoneme_index][index]), 30,
-                                                self.surface_width / 2 + index * 200,
-                                                (self.surface_height / 2 - 30) + phoneme_index * 35)
-
+            if self.player_score:
+                self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", str(self.player_score[0]), 80,
+                                    self.surface_width / 2 + 400, self.surface_height / 8 + 180)  # 单词得分
+                for property_index in range(len(self.word_properties)):
+                    # 先显示三列的指标命名
+                    self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", self.word_properties[property_index], 40,
+                                        self.surface_width / 2 + property_index * 200, self.surface_height / 2 - 30)
+                    #  顺序展示音素的结果
+                    for phoneme_index in range(1, len(self.player_score)):
+                        for index in range(len(self.player_score[phoneme_index])):
+                            if index == 0:  # 如果是音素用一个字体
+                                self.draw_Menu_Text("Game_Fonts/phonetic.ttf", str(self.player_score[phoneme_index][index]),
+                                                    30,
+                                                    self.surface_width / 2 + index * 200,
+                                                    (self.surface_height / 2 - 30) + phoneme_index * 35)
+                            else:
+                                self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF",
+                                                    str(self.player_score[phoneme_index][index]), 30,
+                                                    self.surface_width / 2 + index * 200,
+                                                    (self.surface_height / 2 - 30) + phoneme_index * 35)
+            else:
+                self.rerecord = True
         # 让玩家重新录音
         if self.rerecord:
             self.draw_Menu_Text("Game_Fonts/chinese_pixel_font.TTF", '录音太短,请重新录音', 40,

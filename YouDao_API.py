@@ -82,21 +82,24 @@ def connect(audio_file_path, word_text):
 
     response = do_request(data)  # 发送打分请求
     j = json.loads(str(response.content, encoding="utf-8"))  # 返回一个json文件，就是返回的结果
+    if j['errorCode'] == '11010':  # 如果存在错误编码
+        word_information_list = []
     # print(j) # 看得到的数据是什么
-    word = j["words"]  # 获得有关单词的所有信息，返回的是个列表
-    word = word[0]  # 0代表去除列表，我就只有一个单词
-    word_information_list = []   # 创建一个列表顺序保存所有的数据
-    pronunciation_score = int(word['pronunciation'])  # 单词的整体发音分数
-    word_information_list.append(pronunciation_score)
-    word_phonemes = word['phonemes']  # 获得单词的音素
-    for phonemes_index in range(len(word_phonemes)):  # 顺序循环单词的所有音素
-        phonemes_list = []
-        current_phoneme = word_phonemes[phonemes_index]["phoneme"]  # 当前的音素
-        phonemes_list.append(current_phoneme)
-        phoneme_pronunciation = int(word_phonemes[phonemes_index]['pronunciation'])  # 获得这个音素的发音分数
-        phonemes_list.append(phoneme_pronunciation)
-        phoneme_judge = word_phonemes[phonemes_index]["judge"]  # 判断当前的音素发音是否正确
-        phonemes_list.append(phoneme_judge)
-        word_information_list.append(phonemes_list)
-    # 【word,[w,12,True],[o,11,False],.......】
+    else:
+        word = j["words"]  # 获得有关单词的所有信息，返回的是个列表
+        word = word[0]  # 0代表去除列表，我就只有一个单词
+        word_information_list = []   # 创建一个列表顺序保存所有的数据
+        pronunciation_score = int(word['pronunciation'])  # 单词的整体发音分数
+        word_information_list.append(pronunciation_score)
+        word_phonemes = word['phonemes']  # 获得单词的音素
+        for phonemes_index in range(len(word_phonemes)):  # 顺序循环单词的所有音素
+            phonemes_list = []
+            current_phoneme = word_phonemes[phonemes_index]["phoneme"]  # 当前的音素
+            phonemes_list.append(current_phoneme)
+            phoneme_pronunciation = int(word_phonemes[phonemes_index]['pronunciation'])  # 获得这个音素的发音分数
+            phonemes_list.append(phoneme_pronunciation)
+            phoneme_judge = word_phonemes[phonemes_index]["judge"]  # 判断当前的音素发音是否正确
+            phonemes_list.append(phoneme_judge)
+            word_information_list.append(phonemes_list)
+        # 【word,[w,12,True],[o,11,False],.......】
     return word_information_list

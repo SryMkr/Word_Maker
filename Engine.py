@@ -30,7 +30,7 @@ class MainGame(object):  # main game menu
         # reshape picture
         self.GAME_BACKGROUND_PICTURE = pygame.transform.scale(self.GAME_BACKGROUND_PICTURE,
                                                               (self.window_width, self.window_height))
-
+        self.remembered_words_number = 0  # 用来记录玩家已经记住了几个单词
         self.main_menu = MainMenu(self)  # 第一级菜单
         self.game_setting_menu = GameSetting(self)  # 实例化第二季菜单
         self.pronunciation_menu = PronunciationTest(self)  # 实例化发音菜单
@@ -157,6 +157,7 @@ class MainMenu(CreateMenu):
         if self.image_rect_1.collidepoint(self.word_maker.mouse_click_x - self.image_rect_2.width / 2,
                                           self.word_maker.mouse_click_y - self.image_rect_2.height / 2) and \
                 self.word_maker.main_menu_chance:
+            self.word_maker.remembered_words_number = 0  # 每次开始游戏都要将玩家已经记住的单词初始化为0
             print('当前的session是', int(self.word_maker.learning_session_code))
             select_tasks(int(self.word_maker.learning_session_code))  # 挑选要玩的任务,但是有可能单词没写进去
             self.word_maker.present_word_menu = PresentWords(self.word_maker)  # 必须先写晚间再初始化每一次点击开始游戏都要重新初始化展示单词菜单

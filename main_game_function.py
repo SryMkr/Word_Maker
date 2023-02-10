@@ -1,6 +1,6 @@
 '''
 这个页面有两个函数功能，第一个逐个展示单词，第二个展示所有单词
-可能30秒的时间不够，但是我的目的只是为了让你熟悉单词
+可能30秒的时间不够，但是我的目的只是为了让你熟悉单词，整个展示界面需要330秒
 '''
 
 import pygame.draw
@@ -93,7 +93,7 @@ class PresentWords(object):
                 self.start_time = datetime.now()  # 将现在的时间给过去的时间
                 # 控制软件在什么时候发音
                 self.count_seconds -= 1  # 倒计时减 1
-                if self.count_seconds in [5, 15, 25]:
+                if self.count_seconds in [5, 15, 25]:  # 分别在这三个时间点，强制发音
                     game_Sound('UK_Pronunciation/' + self.words[self.current_task_index] + '.mp3')
                 if self.count_seconds == -1:  # 如果30秒倒计时结束
                     game_Sound('game_sound/mouse_click_1.mp3', 0.3)  # # 展示单词阶段，切换单词的声音
@@ -112,8 +112,8 @@ class PresentAllTasks(object):
         self.word_maker = work_maker  # 得到主游戏
         self.surface_width, self.surface_height = self.word_maker.window.get_size()  # 得到主游戏的屏幕的长和宽
         self.present_words_surface = pygame.Surface((self.surface_width, self.surface_height))  # 创建一个和主屏幕大小一样的Surface
-        self.countdown_all_tasks = 2  # 展示所有单词30秒，是个变化值
-        self.countdown_time = 2  # 展示的总时间，是个固定值
+        self.countdown_all_tasks = 30  # 展示所有单词30秒，是个变化值
+        self.countdown_time = 30  # 展示的总时间，是个固定值
         self.BACKGROUND_COLOR = (200, 200, 200)  # 该界面的背景颜色
         self.start_time = datetime.now()  # 获取但是展示开始的时间
         self.decrease_width = self.surface_width / self.countdown_all_tasks  # 1秒减少多少宽度

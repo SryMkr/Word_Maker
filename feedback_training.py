@@ -18,8 +18,8 @@ class GameFeedback(object):
         # 这是feedback给所有的内容
         self.all_tasks = self.word_maker.all_tasks
         self.start_time = datetime.now()  # 玩游戏开始的时间  # 记录什么时候开始看反馈的
-        self.countdown = 2  # 初始化倒计时，用来记录已经过了多久
-        self.feedback_time = 2  # 反馈展示30秒
+        self.countdown = 30  # 初始化倒计时，用来记录已经过了多久
+        self.feedback_time = 30  # 反馈展示30秒
         self.decrease_width = self.surface_width / self.feedback_time  # 1秒减少多少宽度
         self.learned_words = []  # 用来记录玩家已经记住的单词
         self.x_increase = 250  # 横坐标的增量

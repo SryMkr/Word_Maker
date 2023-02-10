@@ -245,6 +245,7 @@ class GameLevel(object):
                     self.show_Success()  # 展示成功后得反馈
                     self.time_pause = True  # 让进度条时间暂停
                     if self.gameplay_time > self.start_check_time + 2000:  # 如果回答正确展示2秒
+                        self.word_maker.remembered_words_number += 1  # 用来记录玩家已经记住了几个单词
                         self.save_player_feature.append(self.task_second)  # 添加玩家用了多少时间
                         self.save_player_feature.append(self.current_attempt)  # 添加玩家用了多少次机会
                         self.save_player_feature.append(1)  # 1代表玩家对了
@@ -454,10 +455,12 @@ class GameLevel(object):
                             , 40, 720, 50)
         # 展示当前得分
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '当前得分:', 40, 720, 100)
+        # 首先计算还剩多少个单词
+        remaining_tasks = len(self.tasks_parameters_list) - self.task_index
         # 剩余任务数，展示本轮还剩多少单词
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '剩余任务:', 40, 720, 150)
-        # 记住单词，展示玩家已经记住的单词
-        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '记住单词:', 40, 720, 200)
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '剩余任务:' + str(remaining_tasks), 40, 720, 150)
+        # 统计已经记住的单词
+        self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '记住单词:'+str(self.word_maker.remembered_words_number), 40, 720, 200)
         # 操作指引
         self.draw_Left_Text("Game_Fonts/chinese_pixel_font.TTF", '操作指引', 40, 720, 250)
         # 拖动单词
